@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="288dp"
+    android:layout_height="wrap_content"
+    android:background="#F5F5F5"
+    android:orientation="vertical" >
+
+    <!-- 标题 -->
+
+    <TextView
+        android:id="@+id/global_dialog_title"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="#F5F5F5"
+        android:gravity="left|center_vertical"
+        android:paddingLeft="15dp"
+        android:text="温馨提示"
+        android:textColor="#4BBCE0"
+        android:textSize="18sp" />
+    <!-- 横线 -->
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#20ADDA" />
+    <!-- 提示内容 -->
+
+    <ScrollView
+        android:id="@+id/SCROLLER_ID"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:fadingEdge="none" >
+
+        <TextView
+            android:id="@+id/setting_account_bind_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fadingEdge="none"
+            android:paddingBottom="15dp"
+            android:paddingLeft="15dp"
+            android:paddingRight="15dp"
+            android:paddingTop="15dp"
+            android:text="温馨提示p"
+            android:textColor="#444444"
+            android:textSize="18sp" />
+    </ScrollView>
+
+    <!-- 横线（下） -->
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.6dp"
+        android:background="#DDDDDD" />
+    <!-- 按钮 -->
+
+    <LinearLayout
+        android:layout_width="288dp"
+        android:layout_height="48dp"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/setting_account_bind_cancel"
+            android:layout_width="0dip"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_globaldialog"
+            android:text="取消"
+            android:textColor="@drawable/button_status_color"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
+        <View
+            android:id="@+id/line_hori_center"
+            android:layout_width="0.6dp"
+            android:layout_height="match_parent"
+            android:background="#DDDDDD"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/setting_account_bind_confirm"
+            android:layout_width="0dip"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_globaldialog"
+            android:text="确定"
+            android:textColor="@drawable/button_status_color"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+</LinearLayout>

@@ -248,6 +248,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		System.loadLibrary("checkneon");
 	}
 
+	private boolean initSuccess = false;
 	public native static int  checkNeonFromJNI();
 
 	@Override
@@ -270,9 +271,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		
 		initLayout();
 		
-		initVideoRecorder();
-		
-		startRecording();
 	}
 
 	
@@ -288,6 +286,14 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 			mWakeLock.acquire();
 		}
 	}
+	
+	@Override
+	public boolean dispatchTouchEvent(MotionEvent ev) {
+		if(!initSuccess)
+			return false;
+		return super.dispatchTouchEvent(ev);
+	}
+
 
 	@Override
 	protected void onPause() {
@@ -344,33 +350,64 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	}
 
 	private void initCameraLayout() {
-		topLayout = (RelativeLayout) findViewById(R.id.recorder_surface_parent);
-		if(topLayout != null && topLayout.getChildCount() > 0)
-			topLayout.removeAllViews();
-		setCamera();
-		handleSurfaceChanged();
+		new AsyncTask<String, Integer, Boolean>(){
 
-		//设置surface的宽高
-		RelativeLayout.LayoutParams layoutParam1 = new RelativeLayout.LayoutParams(screenWidth,(int) (screenWidth*(previewWidth/(previewHeight*1f))));
-		layoutParam1.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
-		//int margin = Util.calculateMargin(previewWidth, screenWidth);
-		//layoutParam1.setMargins(0,margin,0,margin);
+			@Override
+			protected Boolean doInBackground(String... params) {
+				boolean result = setCamera();
+				
+				if(!initSuccess){
+					
+					initVideoRecorder();
+					startRecording();
+					
+					initSuccess = true;
+				}
+				
+				return result;
+			}
+			
+			@Override
+			protected void onPostExecute(Boolean result) {
+				if(!result || cameraDevice == null){
+					//showToast(FFmpegRecorderActivity.this, "无法连接到相机");
+					finish();
+					return;
+				}
+				
+				topLayout = (RelativeLayout) findViewById(R.id.recorder_surface_parent);
+				if(topLayout != null && topLayout.getChildCount() > 0)
+					topLayout.removeAllViews();
+				
+				cameraView = new CameraView(FFmpegRecorderActivity.this, cameraDevice);
+				
+				handleSurfaceChanged();
+				//设置surface的宽高
+				RelativeLayout.LayoutParams layoutParam1 = new RelativeLayout.LayoutParams(screenWidth,(int) (screenWidth*(previewWidth/(previewHeight*1f))));
+				layoutParam1.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
+				//int margin = Util.calculateMargin(previewWidth, screenWidth);
+				//layoutParam1.setMargins(0,margin,0,margin);
 
-		RelativeLayout.LayoutParams layoutParam2 = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT);
-		layoutParam2.topMargin = screenWidth;
-		
-		View view = new View(this);
-		view.setFocusable(false);
-		view.setBackgroundColor(Color.BLACK);
-		view.setFocusableInTouchMode(false);
-		
-		topLayout.addView(cameraView, layoutParam1);
-		topLayout.addView(view,layoutParam2);
-		
-		topLayout.setOnTouchListener(this);
+				RelativeLayout.LayoutParams layoutParam2 = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT);
+				layoutParam2.topMargin = screenWidth;
+				
+				View view = new View(FFmpegRecorderActivity.this);
+				view.setFocusable(false);
+				view.setBackgroundColor(Color.BLACK);
+				view.setFocusableInTouchMode(false);
+				
+				topLayout.addView(cameraView, layoutParam1);
+				topLayout.addView(view,layoutParam2);
+				
+				topLayout.setOnTouchListener(FFmpegRecorderActivity.this);
+				
+				flashIcon.setVisibility(View.VISIBLE);
+			}
+			
+		}.execute("start");
 	}
 
-	private void setCamera()
+	private boolean setCamera()
 	{
 		try
 		{
@@ -390,22 +427,18 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 			stopPreview();
 			if(mCamera != null)
 				mCamera.release();
+			
 			if(defaultCameraId >= 0)
 				cameraDevice = Camera.open(defaultCameraId);
 			else
 				cameraDevice = Camera.open();
 
-			if(cameraDevice == null){
-				//FuncCore.showToast(this, "暂时无法连接到相机");
-				finish();
-			}
-			cameraView = new CameraView(this, cameraDevice);
-
 		}
 		catch(Exception e)
-		{
-			finish();
+		{	
+			return false;
 		}
+		return true;
 	}
 
 
@@ -1034,7 +1067,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		videoRecorder = null;
 		lastSavedframe = null;
 		
-		progressView.putProgressList((int) totalTime);
+		//progressView.putProgressList((int) totalTime);
 		//停止刷新进度
 		progressView.setCurrentState(State.PAUSE);
 	}

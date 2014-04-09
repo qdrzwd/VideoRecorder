@@ -104,7 +104,7 @@ public class ProgressView extends View
 	}
 	
 	
-	private State currentState = State.PAUSE;//当前状态
+	private volatile State currentState = State.PAUSE;//当前状态
 	private boolean isVisible = true;//一闪一闪的黄色区域是否可见
 	private float countWidth = 0;//每次绘制完成，进度条的长度
 	private float perProgress = 0;//手指按下时，进度条每次增长的长度

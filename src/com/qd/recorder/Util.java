@@ -4,7 +4,6 @@ import static com.googlecode.javacv.cpp.opencv_highgui.cvCreateFileCapture;
 import static com.googlecode.javacv.cpp.opencv_highgui.cvQueryFrame;
 
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -23,14 +22,11 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore.Video;
@@ -151,13 +147,27 @@ public class Util {
 		}
 		return degrees;
 	}
+	
+	public static String createImagePath(Context context){
+		long dateTaken = System.currentTimeMillis();
+		String title = CONSTANTS.FILE_START_NAME + dateTaken;
+		String filename = title + CONSTANTS.IMAGE_EXTENSION;
+		
+		String dirPath = Environment.getExternalStorageDirectory()+"/Android/data/" + context.getPackageName()+"/video";
+		File file = new File(dirPath);
+		if(!file.exists() || !file.isDirectory())
+			file.mkdirs();
+		String filePath = dirPath + "/" + filename;
+		return filePath;
+	}
 
-	public static String createFinalPath()
+	public static String createFinalPath(Context context)
 	{
 		long dateTaken = System.currentTimeMillis();
 		String title = CONSTANTS.FILE_START_NAME + dateTaken;
 		String filename = title + CONSTANTS.VIDEO_EXTENSION;
-		String filePath = genrateFilePath(String.valueOf(dateTaken), true, null);
+		String filePath = genrateFilePath(context,String.valueOf(dateTaken), true, null);
+		
 		ContentValues values = new ContentValues(7);
 		values.put(Video.Media.TITLE, title);
 		values.put(Video.Media.DISPLAY_NAME, filename);
@@ -168,25 +178,42 @@ public class Util {
 
 		return filePath;
 	}
+	
+	public static void deleteTempVideo(Context context){
+		final String dirPath = Environment.getExternalStorageDirectory()+"/Android/data/" + context.getPackageName()+"/video";
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				File file = new File(dirPath);
+				if(file != null && file.isDirectory()){
+					for(File file2 :file.listFiles()){
+						file2.delete();
+					}
+				}
+			}
+		}).start();
+	}
 
-	private static String genrateFilePath(String uniqueId, boolean isFinalPath, File tempFolderPath)
+	private static String genrateFilePath(Context context,String uniqueId, boolean isFinalPath, File tempFolderPath)
 	{
 		String fileName = CONSTANTS.FILE_START_NAME + uniqueId + CONSTANTS.VIDEO_EXTENSION;
-		String dirPath = "";
+		String dirPath = Environment.getExternalStorageDirectory()+"/Android/data/" + context.getPackageName()+"/video";
 		if(isFinalPath)
 		{
-			new File(CONSTANTS.CAMERA_FOLDER_PATH).mkdirs();
-			dirPath = CONSTANTS.CAMERA_FOLDER_PATH;
+			File file = new File(dirPath);
+			if(!file.exists() || !file.isDirectory())
+				file.mkdirs();
 		}
 		else
 			dirPath = tempFolderPath.getAbsolutePath();
 		String filePath = dirPath + "/" + fileName;
 		return filePath;
 	}
-	public static String createTempPath(File tempFolderPath )
+	public static String createTempPath(Context context,File tempFolderPath )
 	{
 		long dateTaken = System.currentTimeMillis();
-		String filePath = genrateFilePath(String.valueOf(dateTaken), false, tempFolderPath);
+		String filePath = genrateFilePath(context,String.valueOf(dateTaken), false, tempFolderPath);
 		return filePath;
 	}
 
@@ -357,48 +384,48 @@ public class Util {
 	}
 	
 	/**
-	 * ¹«¹²µ¯´°
+	 * å…¬å…±å¼¹çª—
 	 * 
 	 * @param context
-	 *            :Context ´«Èëµ±Ç°µ÷ÓÃ¸Ã·½·¨µÄactivityÊµÀı
+	 *            :Context ä¼ å…¥å½“å‰è°ƒç”¨è¯¥æ–¹æ³•çš„activityå®ä¾‹
 	 * @param msg
-	 *            :String ÒªÏÔÊ¾µÄÏÔÊ¾ÎÄ×Ö
+	 *            :String è¦æ˜¾ç¤ºçš„æ˜¾ç¤ºæ–‡å­—
 	 * @param type
-	 *            :int ÏÔÊ¾ÀàĞÍ1£º½öÎªÈ·¶¨£¬2£ºÓĞ¡°È·¶¨¡±¡¢¡°È¡Ïû¡±Á½¸ö²Ù×÷
+	 *            :int æ˜¾ç¤ºç±»å‹1ï¼šä»…ä¸ºç¡®å®šï¼Œ2ï¼šæœ‰â€œç¡®å®šâ€ã€â€œå–æ¶ˆâ€ä¸¤ä¸ªæ“ä½œ
 	 * @param handler
-	 *            :Handler ´«ÈëµÄĞèÒª»Øµ÷µÄhandlerĞÅÏ¢£¬¿É×÷Îª»Øµ÷·½·¨ÊÇÓÃ£¬msg.what = 1Ê±Îª²Ù×÷Íê³É×´Ì¬·û
+	 *            :Handler ä¼ å…¥çš„éœ€è¦å›è°ƒçš„handlerä¿¡æ¯ï¼Œå¯ä½œä¸ºå›è°ƒæ–¹æ³•æ˜¯ç”¨ï¼Œmsg.what = 1æ—¶ä¸ºæ“ä½œå®ŒæˆçŠ¶æ€ç¬¦
 	 */
 	public static void showDialog(Context context, String title, String content, int type, final Handler handler){
 		final Dialog dialog = new Dialog(context, R.style.Dialog_loading);
 		dialog.setCancelable(true);
-		// ÉèÖÃÏñÊÇÄÚÈİÄ£°å
+		// è®¾ç½®åƒæ˜¯å†…å®¹æ¨¡æ¿
 		LayoutInflater inflater = LayoutInflater.from(context);
 		View view = inflater.inflate(R.layout.global_dialog_tpl, null);
 		Button confirmButton = (Button) view
-				.findViewById(R.id.setting_account_bind_confirm);// È·ÈÏ
+				.findViewById(R.id.setting_account_bind_confirm);// ç¡®è®¤
 		Button cancelButton = (Button) view
-				.findViewById(R.id.setting_account_bind_cancel);// È¡Ïû
+				.findViewById(R.id.setting_account_bind_cancel);// å–æ¶ˆ
 		TextView dialogTitle = (TextView) view
-				.findViewById(R.id.global_dialog_title);// ±êÌâ
-		View line_hori_center = view.findViewById(R.id.line_hori_center);// ÖĞÊúÏß
-		confirmButton.setVisibility(View.GONE);// Ä¬ÈÏÒş²ØÈ¡Ïû°´Å¥
+				.findViewById(R.id.global_dialog_title);// æ ‡é¢˜
+		View line_hori_center = view.findViewById(R.id.line_hori_center);// ä¸­ç«–çº¿
+		confirmButton.setVisibility(View.GONE);// é»˜è®¤éšè—å–æ¶ˆæŒ‰é’®
 		line_hori_center.setVisibility(View.GONE);
 		TextView textView = (TextView) view.findViewById(R.id.setting_account_bind_text);
 
-		// ÉèÖÃ¶Ô»°¿òµÄ¿í¶È
+		// è®¾ç½®å¯¹è¯æ¡†çš„å®½åº¦
 		Window dialogWindow = dialog.getWindow();
 		WindowManager.LayoutParams lp = dialogWindow.getAttributes();
-		lp.width = context.getResources().getDisplayMetrics().densityDpi*288;
+		lp.width = (int) (context.getResources().getDisplayMetrics().density*288);
 		dialogWindow.setAttributes(lp);
 
-		// ÉèÖÃÏÔÊ¾ÀàĞÍ
+		// è®¾ç½®æ˜¾ç¤ºç±»å‹
 		if(type != 1 && type != 2){
 			type = 1;
 		}
-		dialogTitle.setText(title);// ÉèÖÃ±êÌâ
-		textView.setText(content); // ÉèÖÃÌáÊ¾ÄÚÈİ
+		dialogTitle.setText(title);// è®¾ç½®æ ‡é¢˜
+		textView.setText(content); // è®¾ç½®æç¤ºå†…å®¹
 
-		// È·ÈÏ°´Å¥²Ù×÷
+		// ç¡®è®¤æŒ‰é’®æ“ä½œ
 		if(type == 1 || type == 2){
 			confirmButton.setVisibility(View.VISIBLE);
 			confirmButton.setOnClickListener(new OnClickListener(){
@@ -413,7 +440,7 @@ public class Util {
 				}
 			});
 		}
-		// È¡Ïû°´Å¥ÊÂ¼ş
+		// å–æ¶ˆæŒ‰é’®äº‹ä»¶
 		if(type == 2){
 			cancelButton.setVisibility(View.VISIBLE);
 			line_hori_center.setVisibility(View.VISIBLE);
@@ -430,22 +457,14 @@ public class Util {
 			});
 		}
 		dialog.addContentView(view, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-		dialog.setCancelable(true);// µã»÷·µ»Ø¼ü¹Ø±Õ
-		dialog.setCanceledOnTouchOutside(true);// µã»÷Íâ²¿¹Ø±Õ
+		dialog.setCancelable(true);// ç‚¹å‡»è¿”å›é”®å…³é—­
+		dialog.setCanceledOnTouchOutside(true);// ç‚¹å‡»å¤–éƒ¨å…³é—­
 		dialog.show();
 	}
 	
-	public static Bitmap getFrame(String filePath){
+	public IplImage getFrame(String filePath){
 		CvCapture capture = cvCreateFileCapture(filePath);
 		IplImage image = cvQueryFrame(capture);
-		byte[] data = image.getByteBuffer().array();
-		YuvImage localYuvImage = new YuvImage(data, 17,image.width(), image.hashCode(), null);
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		localYuvImage.compressToJpeg(new Rect(0, 0, localYuvImage.getWidth(), localYuvImage.getHeight()),
-				100, bos);
-		byte[] temp = bos.toByteArray();
-		Bitmap bitmap = BitmapFactory.decodeByteArray(temp, 0, temp.length);
-		
-		return bitmap;
+		return image;
 	}
 }

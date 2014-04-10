@@ -7,6 +7,7 @@ public class CONSTANTS {
 	public final static String METADATA_REQUEST_BUNDLE_TAG = "requestMetaData";
 	public final static String FILE_START_NAME = "VMS_";
 	public final static String VIDEO_EXTENSION = ".mp4";
+	public final static String IMAGE_EXTENSION = ".jpg";
 	public final static String DCIM_FOLDER = "/DCIM";
 	public final static String CAMERA_FOLDER = "/video";
 	public final static String TEMP_FOLDER = "/Temp";

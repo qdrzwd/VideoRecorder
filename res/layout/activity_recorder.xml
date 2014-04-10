@@ -1,7 +1,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    android:background="@android:color/black" >
 
     <RelativeLayout
         android:id="@+id/recorder_flashlight_parent"
@@ -23,7 +24,8 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_marginLeft="112dp"
-            android:background="@drawable/btn_recorder_flashlight" />
+            android:background="@drawable/btn_recorder_flashlight"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/recorder_frontcamera"
@@ -33,7 +35,8 @@
             android:layout_centerVertical="true"
             android:layout_marginRight="112dp"
             android:layout_toLeftOf="@id/recorder_flashlight"
-            android:background="@drawable/btn_recorder_frontcamera" />
+            android:background="@drawable/btn_recorder_frontcamera"
+            android:visibility="gone" />
     </RelativeLayout>
 
     <com.qd.recorder.ProgressView
@@ -73,7 +76,8 @@
             android:drawableTop="@drawable/btn_recorder_video"
             android:text="视频"
             android:textColor="@drawable/btn_recorder_video_text"
-            android:textSize="12dp" />
+            android:textSize="12dp"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/recorder_next"
@@ -81,8 +85,8 @@
             android:layout_height="36dp"
             android:layout_alignParentRight="true"
             android:background="@drawable/btn_recorder_next"
-            android:text="下一步"
             android:enabled="false"
+            android:text="下一步"
             android:textColor="#444444"
             android:textSize="14dp" />
 
@@ -97,7 +101,8 @@
             android:drawableTop="@drawable/btn_recorder_picture"
             android:text="照片"
             android:textColor="@drawable/btn_recorder_video_text"
-            android:textSize="12dp" />
+            android:textSize="12dp"
+            android:visibility="gone" />
     </RelativeLayout>
 
     <RelativeLayout
@@ -105,20 +110,22 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/recorder_bottom"
-        android:layout_below="@id/recorder_progress">
+        android:layout_below="@id/recorder_progress" >
+
         <SurfaceView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="gone" />
     </RelativeLayout>
-    
-    <ImageView android:background="#7f000000"
+
+    <ImageView
+        android:id="@+id/recorder_surface_state"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:id="@+id/recorder_surface_state"
         android:layout_below="@id/recorder_progress"
-        android:scaleType="center"
+        android:background="#7f000000"
+        android:clickable="false"
         android:focusable="false"
-        android:clickable="false"/>
+        android:scaleType="center" />
 
 </RelativeLayout>

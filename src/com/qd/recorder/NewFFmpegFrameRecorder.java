@@ -69,6 +69,7 @@ import java.nio.ShortBuffer;
 import java.util.Map.Entry;
 
 import static com.googlecode.javacv.cpp.avcodec.*;
+import static com.googlecode.javacv.cpp.opencv_imgproc.*;
 import static com.googlecode.javacv.cpp.avformat.*;
 import static com.googlecode.javacv.cpp.avutil.*;
 import static com.googlecode.javacv.cpp.opencv_core.*;
@@ -79,9 +80,9 @@ import static com.googlecode.javacv.cpp.swscale.*;
  *
  * @author Samuel Audet
  */
-public class FFmpegFrameRecorder extends FrameRecorder {
-    public static FFmpegFrameRecorder createDefault(File f, int w, int h)   throws Exception { return new FFmpegFrameRecorder(f, w, h); }
-    public static FFmpegFrameRecorder createDefault(String f, int w, int h) throws Exception { return new FFmpegFrameRecorder(f, w, h); }
+public class NewFFmpegFrameRecorder extends FrameRecorder {
+    public static NewFFmpegFrameRecorder createDefault(File f, int w, int h)   throws Exception { return new NewFFmpegFrameRecorder(f, w, h); }
+    public static NewFFmpegFrameRecorder createDefault(String f, int w, int h) throws Exception { return new NewFFmpegFrameRecorder(f, w, h); }
 
     private static Exception loadingException = null;
     public static void tryLoad() throws Exception {
@@ -97,7 +98,7 @@ public class FFmpegFrameRecorder extends FrameRecorder {
                 if (t instanceof Exception) {
                     throw loadingException = (Exception)t;
                 } else {
-                    throw loadingException = new Exception("Failed to load " + FFmpegFrameRecorder.class, t);
+                    throw loadingException = new Exception("Failed to load " + NewFFmpegFrameRecorder.class, t);
                 }
             }
         }
@@ -109,22 +110,22 @@ public class FFmpegFrameRecorder extends FrameRecorder {
         avformat_network_init();
     }
 
-    public FFmpegFrameRecorder(File file, int audioChannels) {
+    public NewFFmpegFrameRecorder(File file, int audioChannels) {
         this(file, 0, 0, audioChannels);
     }
-    public FFmpegFrameRecorder(String filename, int audioChannels) {
+    public NewFFmpegFrameRecorder(String filename, int audioChannels) {
         this(filename, 0, 0, audioChannels);
     }
-    public FFmpegFrameRecorder(File file, int imageWidth, int imageHeight) {
+    public NewFFmpegFrameRecorder(File file, int imageWidth, int imageHeight) {
         this(file, imageWidth, imageHeight, 0);
     }
-    public FFmpegFrameRecorder(String filename, int imageWidth, int imageHeight) {
+    public NewFFmpegFrameRecorder(String filename, int imageWidth, int imageHeight) {
         this(filename, imageWidth, imageHeight, 0);
     }
-    public FFmpegFrameRecorder(File file, int imageWidth, int imageHeight, int audioChannels) {
+    public NewFFmpegFrameRecorder(File file, int imageWidth, int imageHeight, int audioChannels) {
         this(file.getAbsolutePath(), imageWidth, imageHeight);
     }
-    public FFmpegFrameRecorder(String filename, int imageWidth, int imageHeight, int audioChannels) {
+    public NewFFmpegFrameRecorder(String filename, int imageWidth, int imageHeight, int audioChannels) {
         this.filename      = filename;
         this.imageWidth    = imageWidth;
         this.imageHeight   = imageHeight;
@@ -617,6 +618,56 @@ public class FFmpegFrameRecorder extends FrameRecorder {
             }
         }
     }
+    
+ // 逆时针旋转图像degree角度（原尺寸）
+ 	private IplImage rotateImage(IplImage img)
+     {
+     	/*IplImage img_rotate = IplImage.create(img.width(), img.height(),  IPL_DEPTH_8U, 2);
+     	//旋转中心为图像中心
+     	CvPoint2D32f center = new CvPoint2D32f(); 
+     	center.x(img.width()/2.0f+0.5f);
+     	center.y(img.height()/2.0f+0.5f);
+     	//计算二维旋转的仿射变换矩阵
+     	CvMat cvMat = cvCreateMat(2, 3, CV_32F);
+     	
+     	cvZero (img_rotate);
+     	cv2DRotationMatrix( center, degree,1.0, cvMat);*/
+     	
+     	//变换图像，并用黑色填充其余值
+     	//cvWarpAffine(img,img_rotate, cvMat,CV_INTER_LINEAR+CV_WARP_FILL_OUTLIERS,cvScalarAll(0) );
+ 		IplImage img_rotate = IplImage.create(img.height(),img.width(),  IPL_DEPTH_8U, 2);
+ 		cvTranspose(img, img_rotate);
+ 		cvTranspose(img_rotate, img);
+ 		//cvTranspose(img, img_rotate);
+     	cvFlip(img,null,-1);
+     	
+     	return img;
+     }
+ 	
+ 	 public static IplImage rotate(IplImage image, double angle) {
+
+
+         IplImage copy = cvCloneImage(image);
+         IplImage rotatedImage = cvCreateImage(cvGetSize(copy), copy.depth(), copy.nChannels());
+
+         //Define Rotational Matrix
+         CvMat mapMatrix = cvCreateMat(2, 3, CV_32FC1);
+
+         //Define Mid Point
+         CvPoint2D32f centerPoint = new CvPoint2D32f();
+         centerPoint.x(copy.width() / 2);
+         centerPoint.y(copy.height() / 2);
+
+         //Get Rotational Matrix
+         cv2DRotationMatrix(centerPoint, angle, 1.0, mapMatrix);
+
+         //Rotate the Image
+         cvWarpAffine(copy, rotatedImage, mapMatrix, CV_INTER_CUBIC + CV_WARP_FILL_OUTLIERS, cvScalarAll(170));
+         cvReleaseImage(copy);
+         cvReleaseMat(mapMatrix);
+
+         return rotatedImage;
+     }
 
     public boolean record(IplImage image) throws Exception {
         return record(image, AV_PIX_FMT_NONE);
@@ -632,6 +683,9 @@ public class FFmpegFrameRecorder extends FrameRecorder {
                frames if using B frames, so we get the last frames by
                passing the same picture again */
         } else {
+        	
+        	//image = rotateImage(image);
+
             int width = image.width();
             int height = image.height();
             int step = image.widthStep();
@@ -659,9 +713,10 @@ public class FFmpegFrameRecorder extends FrameRecorder {
 
             if (video_c.pix_fmt() != pixelFormat || video_c.width() != width || video_c.height() != height) {
                 /* convert to the codec pixel format if needed */
-                img_convert_ctx = sws_getCachedContext(img_convert_ctx, video_c.width(), video_c.height(), pixelFormat,
-                        video_c.width(), video_c.height(), video_c.pix_fmt(), SWS_BILINEAR,
-                        null, null, (DoublePointer)null);
+            	img_convert_ctx = sws_getCachedContext(img_convert_ctx,
+						video_c.width(), video_c.height(), pixelFormat,
+						video_c.width(), video_c.height(), video_c.pix_fmt(),
+                        SWS_BILINEAR,null, null, (DoublePointer)null);
                 if (img_convert_ctx == null) {
                     throw new Exception("sws_getCachedContext() error: Cannot initialize the conversion context.");
                 }

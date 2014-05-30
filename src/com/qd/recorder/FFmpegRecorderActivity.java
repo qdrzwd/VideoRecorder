@@ -886,6 +886,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	            nPos += imageWidth;
 	        }
 	    }
+	    //这一部分可以直接旋转270度，但是图像颜色不对
 //	    // Rotate the Y luma
 //	    int i = 0;
 //	    for(int x = imageWidth-1;x >= 0;x--)
@@ -1111,7 +1112,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 				 }else if(focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)){
 					cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
 				}else
-					cameraParameters.setFocusMode(Camera.Parameters.FLASH_MODE_AUTO);
+					cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
 			}
 		}
 		else

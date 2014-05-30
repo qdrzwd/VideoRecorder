@@ -621,6 +621,7 @@ public class FFmpegFrameRecorder extends FrameRecorder {
     public boolean record(IplImage image) throws Exception {
         return record(image, AV_PIX_FMT_NONE);
     }
+    
     public boolean record(IplImage image, int pixelFormat) throws Exception {
         if (video_st == null) {
             throw new Exception("No video output stream (Is imageWidth > 0 && imageHeight > 0 and has start() been called?)");
@@ -659,7 +660,7 @@ public class FFmpegFrameRecorder extends FrameRecorder {
 
             if (video_c.pix_fmt() != pixelFormat || video_c.width() != width || video_c.height() != height) {
                 /* convert to the codec pixel format if needed */
-                img_convert_ctx = sws_getCachedContext(img_convert_ctx, video_c.width(), video_c.height(), pixelFormat,
+                img_convert_ctx = sws_getCachedContext(img_convert_ctx,  video_c.width(), video_c.height(), pixelFormat,
                         video_c.width(), video_c.height(), video_c.pix_fmt(), SWS_BILINEAR,
                         null, null, (DoublePointer)null);
                 if (img_convert_ctx == null) {

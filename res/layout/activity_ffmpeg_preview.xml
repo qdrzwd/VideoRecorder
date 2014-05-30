@@ -45,8 +45,7 @@
         <TextureView
             android:id="@+id/preview_video"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:rotation="90" />
+            android:layout_height="match_parent"/>
         
          <ImageView
             android:id="@+id/previre_play"

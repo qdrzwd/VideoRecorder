@@ -57,6 +57,8 @@ import com.googlecode.javacpp.Pointer;
 import com.googlecode.javacpp.PointerPointer;
 import com.googlecode.javacpp.ShortPointer;
 import com.googlecode.javacv.FrameRecorder;
+import com.googlecode.javacv.cpp.opencv_core;
+import com.googlecode.javacv.cpp.opencv_imgproc;
 
 import java.io.File;
 import java.nio.Buffer;
@@ -668,6 +670,7 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
 
          return rotatedImage;
      }
+ 	 
 
     public boolean record(IplImage image) throws Exception {
         return record(image, AV_PIX_FMT_NONE);
@@ -684,7 +687,7 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
                passing the same picture again */
         } else {
         	
-        	//image = rotateImage(image);
+        	//image = rotate(image,90);
 
             int width = image.width();
             int height = image.height();

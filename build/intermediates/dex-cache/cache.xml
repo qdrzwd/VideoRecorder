@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="/Users/qiandong/StudioProjects/VideoRecorder1/app/libs/javacv.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="310927e25b52136954b65608f341dfd5e5ad9d64">
+        <dex dex="/Users/qiandong/StudioProjects/VideoRecorder1/app/build/intermediates/pre-dexed/debug/javacv-a67d57c55ace7a1751cd7f2abb860014d713b102.jar" />
+    </item>
+    <item
+        jar="/Users/qiandong/githup/VideoRecorder/app/libs/javacv.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="310927e25b52136954b65608f341dfd5e5ad9d64">
+        <dex dex="/Users/qiandong/githup/VideoRecorder/app/build/intermediates/pre-dexed/debug/javacv-f8d380ba62d24f4dec0496e279d5e37822ef4718.jar" />
+    </item>
+    <item
+        jar="/Users/qiandong/StudioProjects/VideoRecorder1/app/libs/javacpp.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="ff8f2a518e524ae8de093d6556fc21a6ab8f05b2">
+        <dex dex="/Users/qiandong/StudioProjects/VideoRecorder1/app/build/intermediates/pre-dexed/debug/javacpp-d9fec233e6bb1c428048f6a4851ab59714019b7d.jar" />
+    </item>
+    <item
+        jar="/Users/qiandong/extras/android/m2repository/com/android/support/support-v4/18.0.0/support-v4-18.0.0.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="44ec51e9d395a47aab135e5e1b556c0007442156">
+        <dex dex="/Users/qiandong/StudioProjects/VideoRecorder1/app/build/intermediates/pre-dexed/debug/support-v4-18.0.0-cf53480e1f34c66a98eec031d2a1fda858410a04.jar" />
+    </item>
+    <item
+        jar="/Users/qiandong/githup/VideoRecorder/app/libs/javacpp.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="ff8f2a518e524ae8de093d6556fc21a6ab8f05b2">
+        <dex dex="/Users/qiandong/githup/VideoRecorder/app/build/intermediates/pre-dexed/debug/javacpp-1a2d04fc63c9e9fafae511f99087cd6c54ce0a94.jar" />
+    </item>
+
+</items>

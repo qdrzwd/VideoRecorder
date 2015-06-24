@@ -1,0 +1,78 @@
+ECLIPSE ANDROID PROJECT IMPORT SUMMARY
+======================================
+
+Ignored Files:
+--------------
+The following files were *not* copied into the new Gradle project; you
+should evaluate whether these are still needed in your project and if
+so manually move them:
+
+* .gitignore
+* LICENSE
+* README.md
+* ic_launcher-web.png
+* img/
+* img/Screenshot_2014-03-22-22-07-35.png
+* img/Screenshot_2014-03-22-22-07-49.png
+* img/Screenshot_2014-03-22-22-07-58.png
+* img/Screenshot_2014-03-22-22-08-08.png
+* img/Screenshot_2014-03-22-22-08-18.png
+* img/Thumbs.db
+* proguard-project.txt
+
+Replaced Jars with Dependencies:
+--------------------------------
+The importer recognized the following .jar files as third party
+libraries and replaced them with Gradle dependencies instead. This has
+the advantage that more explicit version information is known, and the
+libraries can be updated automatically. However, it is possible that
+the .jar file in your project was of an older version than the
+dependency we picked, which could render the project not compileable.
+You can disable the jar replacement in the import wizard and try again:
+
+android-support-v4.jar => com.android.support:support-v4:18.0.0
+
+Moved Files:
+------------
+Android Gradle projects use a different directory structure than ADT
+Eclipse projects. Here's how the projects were restructured:
+
+* AndroidManifest.xml => app/src/main/AndroidManifest.xml
+* libs/armeabi/libavcodec.so => app/src/main/jniLibs/armeabi/libavcodec.so
+* libs/armeabi/libavfilter.so => app/src/main/jniLibs/armeabi/libavfilter.so
+* libs/armeabi/libavformat.so => app/src/main/jniLibs/armeabi/libavformat.so
+* libs/armeabi/libavutil.so => app/src/main/jniLibs/armeabi/libavutil.so
+* libs/armeabi/libcheckneon.so => app/src/main/jniLibs/armeabi/libcheckneon.so
+* libs/armeabi/libffmpeginvoke.so => app/src/main/jniLibs/armeabi/libffmpeginvoke.so
+* libs/armeabi/libjniavcodec.so => app/src/main/jniLibs/armeabi/libjniavcodec.so
+* libs/armeabi/libjniavfilter.so => app/src/main/jniLibs/armeabi/libjniavfilter.so
+* libs/armeabi/libjniavformat.so => app/src/main/jniLibs/armeabi/libjniavformat.so
+* libs/armeabi/libjniavutil.so => app/src/main/jniLibs/armeabi/libjniavutil.so
+* libs/armeabi/libjniopencv_core.so => app/src/main/jniLibs/armeabi/libjniopencv_core.so
+* libs/armeabi/libjniopencv_imgproc.so => app/src/main/jniLibs/armeabi/libjniopencv_imgproc.so
+* libs/armeabi/libjniswresample.so => app/src/main/jniLibs/armeabi/libjniswresample.so
+* libs/armeabi/libjniswscale.so => app/src/main/jniLibs/armeabi/libjniswscale.so
+* libs/armeabi/libopencv_core.so => app/src/main/jniLibs/armeabi/libopencv_core.so
+* libs/armeabi/libopencv_imgproc.so => app/src/main/jniLibs/armeabi/libopencv_imgproc.so
+* libs/armeabi/libswresample.so => app/src/main/jniLibs/armeabi/libswresample.so
+* libs/armeabi/libswscale.so => app/src/main/jniLibs/armeabi/libswscale.so
+* libs/armeabi/libtbb.so => app/src/main/jniLibs/armeabi/libtbb.so
+* libs/javacpp.jar => app/libs/javacpp.jar
+* libs/javacv.jar => app/libs/javacv.jar
+* res/ => app/src/main/res/
+* src/ => app/src/main/java/
+
+Next Steps:
+-----------
+You can now build the project. The Gradle project needs network
+connectivity to download dependencies.
+
+Bugs:
+-----
+If for some reason your project does not build, and you determine that
+it is due to a bug or limitation of the Eclipse to Gradle importer,
+please file a bug at http://b.android.com with category
+Component-Tools.
+
+(This import summary is for your information only, and can be deleted
+after import once you are satisfied with the results.)

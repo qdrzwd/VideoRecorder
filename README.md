@@ -3,7 +3,7 @@ VideoRecorder
 
 android视频录制，模仿微视，支持按下录制、抬起暂停。进度条断点显示。
 
-感谢sourab-sharma提供的代码 https://github.com/sourab-sharma/TouchToRecord
+感谢sourab-sharma提供的代码，以及最新的维护。查看项目 https://github.com/sourab-sharma/TouchToRecord
 
 视频录制存在的问题：
 

@@ -83,15 +83,15 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	//判断是否需要录制，点击下一步时暂停录制
 	private boolean rec = false;
 	//判断是否需要录制，手指按下继续，抬起时暂停
-	boolean recording = false;
+	private boolean recording = false;
 	//判断是否开始了录制，第一次按下屏幕时设置为true
-	boolean	isRecordingStarted = false;
+	private boolean	isRecordingStarted = false;
 	//是否开启闪光灯
-	boolean isFlashOn = false;
-	TextView txtTimer, txtRecordingSize;
+	private boolean isFlashOn = false;
+	private TextView txtTimer, txtRecordingSize;
 	//分别为闪光灯按钮、取消按钮、下一步按钮、转置摄像头按钮
-	Button flashIcon = null,cancelBtn,nextBtn,switchCameraIcon = null;
-	boolean nextEnabled = false;
+	private Button flashIcon = null,cancelBtn,nextBtn,switchCameraIcon = null;
+	private boolean nextEnabled = false;
 	
 	//录制视频和保存音频的类
 	private volatile NewFFmpegFrameRecorder videoRecorder;
@@ -114,33 +114,33 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	private AudioRecordRunnable audioRecordRunnable;
 	private Thread audioThread;
 	//开启和停止录制音频的标记
-	volatile boolean runAudioThread = true;
+	private volatile boolean runAudioThread = true;
 
 	//摄像头以及它的参数
 	private Camera cameraDevice;
 	private CameraView cameraView;
-	Parameters cameraParameters = null;
+	private Parameters cameraParameters = null;
 	//IplImage对象,用于存储摄像头返回的byte[]，以及图片的宽高，depth，channel等
 	private IplImage yuvIplImage = null;
 	//分别为 默认摄像头（后置）、默认调用摄像头的分辨率、被选择的摄像头（前置或者后置）
-	int defaultCameraId = -1, defaultScreenResolution = -1 , cameraSelection = 0;
+	private int defaultCameraId = -1, defaultScreenResolution = -1 , cameraSelection = 0;
 
 	private Dialog dialog = null;
 	//包含显示摄像头数据的surfaceView
-	RelativeLayout topLayout = null;
+	private RelativeLayout topLayout = null;
 
 	//第一次按下屏幕时记录的时间
-	long firstTime = 0;
+	private long firstTime = 0;
 	//手指抬起是的时间
-	long startPauseTime = 0;
+	private long startPauseTime = 0;
 	//每次按下手指和抬起之间的暂停时间
-	long totalPauseTime = 0;
+	private long totalPauseTime = 0;
 	//手指抬起是的时间
-	long pausedTime = 0;
+	private long pausedTime = 0;
 	//总的暂停时间
-	long stopPauseTime = 0;
+	private long stopPauseTime = 0;
 	//录制的有效总时间
-	long totalTime = 0;
+	private long totalTime = 0;
 	//视频帧率
 	private int frameRate = 30;
 	//录制的最长时间
@@ -149,8 +149,8 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	private int recordingMinimumTime = 6000;
 	//提示换个场景
 	private int recordingChangeTime = 3000;
-	
-	boolean recordFinish = false;
+
+	private boolean recordFinish = false;
 	private  Dialog creatingProgress;
 	
 	//音频时间戳
@@ -640,10 +640,10 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	 *
 	 */
 	class AudioRecordRunnable implements Runnable {
-		
-		int bufferSize;
-		short[] audioData;
-		int bufferReadResult;
+
+		private int bufferSize;
+		private short[] audioData;
+		private int bufferReadResult;
 		private final AudioRecord audioRecord;
 		public volatile boolean isInitialized;
 		private int mCount =0;

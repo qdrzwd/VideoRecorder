@@ -14,6 +14,19 @@ import android.view.View;
 
 public class ProgressView extends View
 {
+	private Paint progressPaint, firstPaint, threePaint,breakPaint;//三个颜色的画笔
+	private float firstWidth = 4f, threeWidth = 1f;//断点的宽度
+	private LinkedList<Integer> linkedList = new LinkedList<Integer>();
+	private float perPixel = 0l;
+	private float countRecorderTime = 6000;//总的录制时间
+
+	private volatile State currentState = State.PAUSE;//当前状态
+	private boolean isVisible = true;//一闪一闪的黄色区域是否可见
+	private float countWidth = 0;//每次绘制完成，进度条的长度
+	private float perProgress = 0;//手指按下时，进度条每次增长的长度
+	private float perSecProgress = 0;//每毫秒对应的像素点
+	private long initTime;//绘制完成时的时间戳
+	private long drawFlashTime = 0;//闪动的黄色区域时间戳
 
 	public ProgressView(Context context) {
 		super(context);
@@ -31,12 +44,6 @@ public class ProgressView extends View
 		super(paramContext, paramAttributeSet, paramInt);
 		init(paramContext);
 	}
-
-	private Paint progressPaint, firstPaint, threePaint,breakPaint;//三个颜色的画笔
-	private float firstWidth = 4f, threeWidth = 1f;//断点的宽度
-	private LinkedList<Integer> linkedList = new LinkedList<Integer>();
-	private float perPixel = 0l;
-	private float countRecorderTime = 6000;//总的录制时间
 
 	public void setTotalTime(float time){
 		countRecorderTime = time;
@@ -83,6 +90,12 @@ public class ProgressView extends View
 	public static enum State {
 		START(0x1),PAUSE(0x2);
 
+		private int mIntValue;
+
+		State(int intValue) {
+			mIntValue = intValue;
+		}
+
 		static State mapIntToValue(final int stateInt) {
 			for (State value : State.values()) {
 				if (stateInt == value.getIntValue()) {
@@ -92,25 +105,10 @@ public class ProgressView extends View
 			return PAUSE;
 		}
 
-		private int mIntValue;
-
-		State(int intValue) {
-			mIntValue = intValue;
-		}
-
 		int getIntValue() {
 			return mIntValue;
 		}
 	}
-
-
-	private volatile State currentState = State.PAUSE;//当前状态
-	private boolean isVisible = true;//一闪一闪的黄色区域是否可见
-	private float countWidth = 0;//每次绘制完成，进度条的长度
-	private float perProgress = 0;//手指按下时，进度条每次增长的长度
-	private float perSecProgress = 0;//每毫秒对应的像素点
-	private long initTime;//绘制完成时的时间戳
-	private long drawFlashTime = 0;//闪动的黄色区域时间戳
 
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);

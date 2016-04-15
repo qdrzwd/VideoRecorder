@@ -21,14 +21,6 @@ public class VideoPlayTextureView extends TextureView implements
 	private MediaState currentMediaState = MediaState.RESET;
 	private boolean isChange = true;//当加载完视频文件时，判断当前SurfaceView是否还是之前的SurfaceView
 
-	public void setChange(boolean change){
-		isChange = change;
-	}
-
-	public boolean isChange(){
-		return isChange;
-	}
-
 	public VideoPlayTextureView(Context context) {
 		super(context);
 		init(context);
@@ -43,6 +35,14 @@ public class VideoPlayTextureView extends TextureView implements
 								AttributeSet paramAttributeSet, int paramInt) {
 		super(paramContext, paramAttributeSet, paramInt);
 		init(paramContext);
+	}
+
+	public void setChange(boolean change){
+		isChange = change;
+	}
+
+	public boolean isChange(){
+		return isChange;
 	}
 
 	/**
@@ -168,6 +168,13 @@ public class VideoPlayTextureView extends TextureView implements
 	 */
 	public enum MediaState {
 		RESET(0x5),PREPARE(0x1), COMPLETE(0x2), PLAY(0x3), PAUSE(0x4);
+
+		private int mIntValue;
+
+		MediaState(int intValue) {
+			mIntValue = intValue;
+		}
+
 		static MediaState mapIntToValue(final int stateInt) {
 			for (MediaState value : MediaState.values()) {
 				if (stateInt == value.getIntValue()) {
@@ -175,12 +182,6 @@ public class VideoPlayTextureView extends TextureView implements
 				}
 			}
 			return RESET;
-		}
-
-		private int mIntValue;
-
-		MediaState(int intValue) {
-			mIntValue = intValue;
 		}
 
 		int getIntValue() {

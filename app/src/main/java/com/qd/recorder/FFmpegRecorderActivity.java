@@ -179,6 +179,14 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	private RecorderThread recorderThread;
 	
 	private Handler mHandler;
+
+	private boolean initSuccess = false;
+
+	//获取第一幀的图片
+	private boolean isFirstFrame = true;
+
+	private int mIntValue;
+
 	private void initHandler(){
 		mHandler = new Handler(){
 			@Override
@@ -243,7 +251,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	}
 
 	public native static int  checkNeonFromJNI();
-	private boolean initSuccess = false;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -722,10 +729,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		}
 	}
 	
-	//获取第一幀的图片
-	private boolean isFirstFrame = true;
-	
-		
 	/**
 	 * 显示摄像头的内容，以及返回摄像头的每一帧数据
 	 * @author QD
@@ -1282,7 +1285,11 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	
 	public enum RecorderState {
 		PRESS(1),LOOSEN(2),CHANGE(3),SUCCESS(4);
-		
+
+		RecorderState(int intValue) {
+			mIntValue = intValue;
+		}
+
 		static RecorderState mapIntToValue(final int stateInt) {
 			for (RecorderState value : RecorderState.values()) {
 				if (stateInt == value.getIntValue()) {
@@ -1290,12 +1297,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 				}
 			}
 			return PRESS;
-		}
-
-		private int mIntValue;
-
-		RecorderState(int intValue) {
-			mIntValue = intValue;
 		}
 
 		int getIntValue() {

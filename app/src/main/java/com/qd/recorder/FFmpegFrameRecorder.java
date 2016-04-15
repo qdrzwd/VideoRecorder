@@ -80,10 +80,76 @@ import static com.googlecode.javacv.cpp.swscale.*;
  * @author Samuel Audet
  */
 public class FFmpegFrameRecorder extends FrameRecorder {
+
+    private String filename;
+    private AVFrame picture, tmp_picture;
+    private BytePointer picture_buf;
+    private BytePointer video_outbuf;
+    private int video_outbuf_size;
+    private AVFrame frame;
+    private Pointer[] samples_in;
+    private BytePointer[] samples_out;
+    private PointerPointer samples_in_ptr;
+    private PointerPointer samples_out_ptr;
+    private BytePointer audio_outbuf;
+    private int audio_outbuf_size;
+    private int audio_input_frame_size;
+    private AVOutputFormat oformat;
+    private AVFormatContext oc;
+    private AVCodec video_codec, audio_codec;
+    private AVCodecContext video_c, audio_c;
+    private AVStream video_st, audio_st;
+    private SwsContext img_convert_ctx;
+    private SwrContext samples_convert_ctx;
+    private AVPacket video_pkt, audio_pkt;
+    private int[] got_video_packet, got_audio_packet;
+    private static Exception loadingException = null;
+
+    public FFmpegFrameRecorder(File file, int audioChannels) {
+        this(file, 0, 0, audioChannels);
+    }
+
+    public FFmpegFrameRecorder(String filename, int audioChannels) {
+        this(filename, 0, 0, audioChannels);
+    }
+
+    public FFmpegFrameRecorder(File file, int imageWidth, int imageHeight) {
+        this(file, imageWidth, imageHeight, 0);
+    }
+
+    public FFmpegFrameRecorder(String filename, int imageWidth, int imageHeight) {
+        this(filename, imageWidth, imageHeight, 0);
+    }
+
+    public FFmpegFrameRecorder(File file, int imageWidth, int imageHeight, int audioChannels) {
+        this(file.getAbsolutePath(), imageWidth, imageHeight);
+    }
+
+    public FFmpegFrameRecorder(String filename, int imageWidth, int imageHeight, int audioChannels) {
+        this.filename      = filename;
+        this.imageWidth    = imageWidth;
+        this.imageHeight   = imageHeight;
+        this.audioChannels = audioChannels;
+
+        this.pixelFormat   = AV_PIX_FMT_NONE;
+        this.videoCodec    = AV_CODEC_ID_NONE;
+        this.videoBitrate  = 400000;
+        this.frameRate     = 30;
+
+        this.sampleFormat  = AV_SAMPLE_FMT_NONE;
+        this.audioCodec    = AV_CODEC_ID_NONE;
+        this.audioBitrate  = 64000;
+        this.sampleRate    = 44100;
+
+        this.interleaved = true;
+
+        this.video_pkt = new AVPacket();
+        this.audio_pkt = new AVPacket();
+    }
+
     public static FFmpegFrameRecorder createDefault(File f, int w, int h)   throws Exception { return new FFmpegFrameRecorder(f, w, h); }
     public static FFmpegFrameRecorder createDefault(String f, int w, int h) throws Exception { return new FFmpegFrameRecorder(f, w, h); }
 
-    private static Exception loadingException = null;
     public static void tryLoad() throws Exception {
         if (loadingException != null) {
             throw loadingException;
@@ -109,42 +175,6 @@ public class FFmpegFrameRecorder extends FrameRecorder {
         avformat_network_init();
     }
 
-    public FFmpegFrameRecorder(File file, int audioChannels) {
-        this(file, 0, 0, audioChannels);
-    }
-    public FFmpegFrameRecorder(String filename, int audioChannels) {
-        this(filename, 0, 0, audioChannels);
-    }
-    public FFmpegFrameRecorder(File file, int imageWidth, int imageHeight) {
-        this(file, imageWidth, imageHeight, 0);
-    }
-    public FFmpegFrameRecorder(String filename, int imageWidth, int imageHeight) {
-        this(filename, imageWidth, imageHeight, 0);
-    }
-    public FFmpegFrameRecorder(File file, int imageWidth, int imageHeight, int audioChannels) {
-        this(file.getAbsolutePath(), imageWidth, imageHeight);
-    }
-    public FFmpegFrameRecorder(String filename, int imageWidth, int imageHeight, int audioChannels) {
-        this.filename      = filename;
-        this.imageWidth    = imageWidth;
-        this.imageHeight   = imageHeight;
-        this.audioChannels = audioChannels;
-
-        this.pixelFormat   = AV_PIX_FMT_NONE;
-        this.videoCodec    = AV_CODEC_ID_NONE;
-        this.videoBitrate  = 400000;
-        this.frameRate     = 30;
-
-        this.sampleFormat  = AV_SAMPLE_FMT_NONE;
-        this.audioCodec    = AV_CODEC_ID_NONE;
-        this.audioBitrate  = 64000;
-        this.sampleRate    = 44100;
-
-        this.interleaved = true;
-
-        this.video_pkt = new AVPacket();
-        this.audio_pkt = new AVPacket();
-    }
     public void release() throws Exception {
         synchronized (com.googlecode.javacv.cpp.avcodec.class) {
             releaseUnsafe();
@@ -225,29 +255,6 @@ public class FFmpegFrameRecorder extends FrameRecorder {
         super.finalize();
         release();
     }
-
-    private String filename;
-    private AVFrame picture, tmp_picture;
-    private BytePointer picture_buf;
-    private BytePointer video_outbuf;
-    private int video_outbuf_size;
-    private AVFrame frame;
-    private Pointer[] samples_in;
-    private BytePointer[] samples_out;
-    private PointerPointer samples_in_ptr;
-    private PointerPointer samples_out_ptr;
-    private BytePointer audio_outbuf;
-    private int audio_outbuf_size;
-    private int audio_input_frame_size;
-    private AVOutputFormat oformat;
-    private AVFormatContext oc;
-    private AVCodec video_codec, audio_codec;
-    private AVCodecContext video_c, audio_c;
-    private AVStream video_st, audio_st;
-    private SwsContext img_convert_ctx;
-    private SwrContext samples_convert_ctx;
-    private AVPacket video_pkt, audio_pkt;
-    private int[] got_video_packet, got_audio_packet;
 
     @Override public int getFrameNumber() {
         return picture == null ? super.getFrameNumber() : (int)picture.pts();

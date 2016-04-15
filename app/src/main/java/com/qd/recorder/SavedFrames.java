@@ -6,12 +6,38 @@ import android.os.Parcelable;
 
 
 public class SavedFrames implements Parcelable{
-	
+
 	private byte[] frameBytesData = null;
 	private long timeStamp = 0L;
 	private String cachePath = null;
 	private int frameSize = 0;
-	 
+
+	public static final Creator<SavedFrames> CREATOR = new Creator<SavedFrames>() {
+		@Override
+		public SavedFrames createFromParcel(Parcel paramParcel) {
+			SavedFrames savedFrame = new SavedFrames();
+			savedFrame.readFromParcel(paramParcel);
+			return savedFrame;
+		}
+
+		@Override
+		public SavedFrames[] newArray(int paramInt) {
+			return new SavedFrames[paramInt];
+		}
+	};
+	public SavedFrames(byte[] frameBytesData, long timeStamp) {
+		this.frameBytesData = frameBytesData;
+		this.timeStamp = timeStamp;
+	}
+	public SavedFrames(Parcel in) {
+		readFromParcel(in);
+	}
+	public SavedFrames() {
+		frameSize = 0;
+		frameBytesData = new byte[0];
+		timeStamp = 0L;
+		cachePath = null;
+	}
 	public byte[] getFrameBytesData() {
 		return frameBytesData;
 	}
@@ -24,14 +50,7 @@ public class SavedFrames implements Parcelable{
 	public void setTimeStamp(long timeStamp) {
 		this.timeStamp = timeStamp;
 	}
-	 
-	 public SavedFrames(byte[] frameBytesData, long timeStamp)
-	 {
-		 this.frameBytesData = frameBytesData;
-		 this.timeStamp = timeStamp;
-	 }
 
-	
 	public String getCachePath() {
 		return cachePath;
 	}
@@ -45,36 +64,6 @@ public class SavedFrames implements Parcelable{
 	public void setframeSize(int frameSize) {
 		this.frameSize = frameSize;
 	}
-	
-	public SavedFrames(Parcel in)
-	{
-		readFromParcel(in);
-	}
-
-	public SavedFrames()
-	{
-		frameSize = 0;
-		frameBytesData =  new byte[0];
-		timeStamp = 0L;
-		cachePath = null;
-	}
-
-	public static final Creator<SavedFrames> CREATOR = new Creator<SavedFrames>()
-	{
-		@Override
-		public SavedFrames createFromParcel(Parcel paramParcel)
-		{
-			SavedFrames savedFrame = new SavedFrames();
-			savedFrame.readFromParcel(paramParcel);
-			return savedFrame;
-		}
-
-		@Override
-		public SavedFrames[] newArray(int paramInt)
-		{
-			return new SavedFrames[paramInt];
-		}
-	};
 
 	@Override
 	public int describeContents()

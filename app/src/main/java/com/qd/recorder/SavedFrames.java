@@ -7,10 +7,10 @@ import android.os.Parcelable;
 
 public class SavedFrames implements Parcelable{
 
-	private byte[] frameBytesData = null;
-	private long timeStamp = 0L;
-	private String cachePath = null;
-	private int frameSize = 0;
+	private byte[] frameBytesData;
+	private long timeStamp;
+	private String cachePath;
+	private int frameSize;
 
 	public static final Creator<SavedFrames> CREATOR = new Creator<SavedFrames>() {
 		@Override

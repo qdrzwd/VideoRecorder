@@ -14,19 +14,23 @@ import android.view.View;
 
 public class ProgressView extends View
 {
-	private Paint progressPaint, firstPaint, threePaint,breakPaint;//三个颜色的画笔
-	private float firstWidth = 4f, threeWidth = 1f;//断点的宽度
+	private Paint progressPaint;//三个颜色的画笔
+	private Paint firstPaint;//三个颜色的画笔
+	private Paint threePaint;//三个颜色的画笔
+	private Paint breakPaint;//三个颜色的画笔
+	private float firstWidth = 4f;//断点的宽度
+	private float threeWidth = 1f;//断点的宽度
 	private LinkedList<Integer> linkedList = new LinkedList<Integer>();
-	private float perPixel = 0l;
+	private float perPixel;
 	private float countRecorderTime = 6000;//总的录制时间
 
 	private volatile State currentState = State.PAUSE;//当前状态
 	private boolean isVisible = true;//一闪一闪的黄色区域是否可见
-	private float countWidth = 0;//每次绘制完成，进度条的长度
-	private float perProgress = 0;//手指按下时，进度条每次增长的长度
-	private float perSecProgress = 0;//每毫秒对应的像素点
-	private long initTime;//绘制完成时的时间戳
-	private long drawFlashTime = 0;//闪动的黄色区域时间戳
+	private float countWidth; //每次绘制完成，进度条的长度
+	private float perProgress; //手指按下时，进度条每次增长的长度
+	private float perSecProgress; //每毫秒对应的像素点
+	private long initTime; //绘制完成时的时间戳
+	private long drawFlashTime; //闪动的黄色区域时间戳
 
 	public ProgressView(Context context) {
 		super(context);

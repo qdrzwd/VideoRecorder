@@ -77,34 +77,40 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	//视频文件的存放地址
 	private String strVideoPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "rec_video.mp4";
 	//视频文件对象
-	private File fileVideoPath = null;
+	private File fileVideoPath;
 	//视频文件在系统中存放的url
-	private Uri uriVideoPath = null;
+	private Uri uriVideoPath;
 	//判断是否需要录制，点击下一步时暂停录制
-	private boolean rec = false;
+	private boolean rec;
 	//判断是否需要录制，手指按下继续，抬起时暂停
-	private boolean recording = false;
+	private boolean recording;
 	//判断是否开始了录制，第一次按下屏幕时设置为true
-	private boolean	isRecordingStarted = false;
+	private boolean	isRecordingStarted;
 	//是否开启闪光灯
-	private boolean isFlashOn = false;
-	private TextView txtTimer, txtRecordingSize;
+	private boolean isFlashOn;
+	private TextView txtTimer;
+	private TextView txtRecordingSize;
 	//分别为闪光灯按钮、取消按钮、下一步按钮、转置摄像头按钮
-	private Button flashIcon = null,cancelBtn,nextBtn,switchCameraIcon = null;
-	private boolean nextEnabled = false;
+	private Button flashIcon;
+	private Button cancelBtn;
+	private Button nextBtn;
+	private Button switchCameraIcon;
+	private boolean nextEnabled;
 	
 	//录制视频和保存音频的类
 	private volatile NewFFmpegFrameRecorder videoRecorder;
 	
 	//判断是否是前置摄像头
-	private boolean isPreviewOn = false;
+	private boolean isPreviewOn;
 	//当前录制的质量，会影响视频清晰度和文件大小
 	private int currentResolution = CONSTANTS.RESOLUTION_MEDIUM_VALUE;
 	private Camera mCamera;
 
 	//预览的宽高和屏幕宽高
-	private int previewWidth = 480, screenWidth = 480;
-	private int previewHeight = 480, screenHeight = 800;
+	private int previewWidth = 480;
+	private int screenWidth = 480;
+	private int previewHeight = 480;
+	private int screenHeight = 800;
 	
 	//音频的采样率，recorderParameters中会有默认值
 	private int sampleRate = 44100;
@@ -119,28 +125,30 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	//摄像头以及它的参数
 	private Camera cameraDevice;
 	private CameraView cameraView;
-	private Parameters cameraParameters = null;
+	private Parameters cameraParameters;
 	//IplImage对象,用于存储摄像头返回的byte[]，以及图片的宽高，depth，channel等
-	private IplImage yuvIplImage = null;
+	private IplImage yuvIplImage;
 	//分别为 默认摄像头（后置）、默认调用摄像头的分辨率、被选择的摄像头（前置或者后置）
-	private int defaultCameraId = -1, defaultScreenResolution = -1 , cameraSelection = 0;
+	private int defaultCameraId = -1;
+	private int defaultScreenResolution = -1;
+	private int cameraSelection;
 
-	private Dialog dialog = null;
+	private Dialog dialog;
 	//包含显示摄像头数据的surfaceView
-	private RelativeLayout topLayout = null;
+	private RelativeLayout topLayout;
 
 	//第一次按下屏幕时记录的时间
-	private long firstTime = 0;
+	private long firstTime;
 	//手指抬起是的时间
-	private long startPauseTime = 0;
+	private long startPauseTime;
 	//每次按下手指和抬起之间的暂停时间
-	private long totalPauseTime = 0;
+	private long totalPauseTime;
 	//手指抬起是的时间
-	private long pausedTime = 0;
+	private long pausedTime;
 	//总的暂停时间
-	private long stopPauseTime = 0;
+	private long stopPauseTime;
 	//录制的有效总时间
-	private long totalTime = 0;
+	private long totalTime;
 	//视频帧率
 	private int frameRate = 30;
 	//录制的最长时间
@@ -150,37 +158,37 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	//提示换个场景
 	private int recordingChangeTime = 3000;
 
-	private boolean recordFinish = false;
+	private boolean recordFinish;
 	private  Dialog creatingProgress;
 	
 	//音频时间戳
-	private volatile long mAudioTimestamp = 0L;
-	private long mLastAudioTimestamp = 0L;
+	private volatile long mAudioTimestamp;
+	private long mLastAudioTimestamp;
 	private volatile long mAudioTimeRecorded;
-	private long frameTime = 0L;
+	private long frameTime;
 	//每一幀的数据结构
 	private SavedFrames lastSavedframe = new SavedFrames(null,0L);
 	//视频时间戳
-	private long mVideoTimestamp = 0L;
+	private long mVideoTimestamp;
 	//时候保存过视频文件
-	private boolean isRecordingSaved = false;
-	private boolean isFinalizing = false;
+	private boolean isRecordingSaved;
+	private boolean isFinalizing;
 	
 	//进度条
 	private ProgressView progressView;
 	//捕获的第一幀的图片
-	private String imagePath = null;
+	private String imagePath;
 	private RecorderState currentRecorderState = RecorderState.PRESS;
 	private ImageView stateImageView;
 	
-	private byte[] firstData = null;
+	private byte[] firstData;
 	private byte[] bufferByte;
 
 	private RecorderThread recorderThread;
 	
 	private Handler mHandler;
 
-	private boolean initSuccess = false;
+	private boolean initSuccess;
 
 	//获取第一幀的图片
 	private boolean isFirstFrame = true;
@@ -653,7 +661,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		private int bufferReadResult;
 		private final AudioRecord audioRecord;
 		public volatile boolean isInitialized;
-		private int mCount =0;
+		private int mCount;
 		private AudioRecordRunnable()
 		{
 			bufferSize = AudioRecord.getMinBufferSize(sampleRate, 
@@ -902,7 +910,10 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 
 		public byte[] cropYUV420(byte[] data,int imageW,int imageH,int newImageH){
 			int cropH;
-			int i,j,count,tmp;
+			int i;
+			int j;
+			int count;
+			int tmp;
 			byte[] yuv = new byte[imageW*newImageH*3/2];
 
 			cropH = (imageH - newImageH)/2;

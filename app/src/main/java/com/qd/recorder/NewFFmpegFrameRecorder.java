@@ -57,8 +57,6 @@ import com.googlecode.javacpp.Pointer;
 import com.googlecode.javacpp.PointerPointer;
 import com.googlecode.javacpp.ShortPointer;
 import com.googlecode.javacv.FrameRecorder;
-import com.googlecode.javacv.cpp.opencv_core;
-import com.googlecode.javacv.cpp.opencv_imgproc;
 
 import java.io.File;
 import java.nio.Buffer;
@@ -85,29 +83,35 @@ import static com.googlecode.javacv.cpp.swscale.*;
 public class NewFFmpegFrameRecorder extends FrameRecorder {
 
     private String filename;
-    private AVFrame picture, tmp_picture;
-    private BytePointer picture_buf;
-    private BytePointer video_outbuf;
-    private int video_outbuf_size;
+    private AVFrame picture;
+    private AVFrame tmpPicture;
+    private BytePointer pictureBuf;
+    private BytePointer videoOutbuf;
+    private int videoOutbufSize;
     private AVFrame frame;
-    private Pointer[] samples_in;
-    private BytePointer[] samples_out;
-    private PointerPointer samples_in_ptr;
-    private PointerPointer samples_out_ptr;
-    private BytePointer audio_outbuf;
-    private int audio_outbuf_size;
-    private int audio_input_frame_size;
+    private Pointer[] samplesIn;
+    private BytePointer[] samplesOut;
+    private PointerPointer samplesInPtr;
+    private PointerPointer samplesOutPtr;
+    private BytePointer audioOutbuf;
+    private int audioOutbufSize;
+    private int audioInputFrameSize;
     private AVOutputFormat oformat;
     private AVFormatContext oc;
-    private AVCodec video_codec, audio_codec;
-    private AVCodecContext video_c, audio_c;
-    private AVStream video_st, audio_st;
-    private SwsContext img_convert_ctx;
-    private SwrContext samples_convert_ctx;
-    private AVPacket video_pkt, audio_pkt;
-    private int[] got_video_packet, got_audio_packet;
+    private AVCodec videoCodecAVCodec;
+    private AVCodec audioCodecAVCodec;
+    private AVCodecContext videoC;
+    private AVCodecContext audioC;
+    private AVStream videoSt;
+    private AVStream audioSt;
+    private SwsContext imgConvertCtx;
+    private SwrContext samplesConvertCtx;
+    private AVPacket videoPkt;
+    private AVPacket audioPkt;
+    private int[] gotVideoPacket;
+    private int[] gotAudioPacket;
 
-    private static Exception loadingException = null;
+    private static Exception loadingException;
 
     public NewFFmpegFrameRecorder(File file, int audioChannels) {
         this(file, 0, 0, audioChannels);
@@ -147,8 +151,8 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
 
         this.interleaved = true;
 
-        this.video_pkt = new AVPacket();
-        this.audio_pkt = new AVPacket();
+        this.videoPkt = new AVPacket();
+        this.audioPkt = new AVPacket();
     }
 
     public static NewFFmpegFrameRecorder createDefault(File f, int w, int h)   throws Exception { return new NewFFmpegFrameRecorder(f, w, h); }
@@ -186,46 +190,46 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
     }
     public void releaseUnsafe() throws Exception {
         /* close each codec */
-        if (video_c != null) {
-            avcodec_close(video_c);
-            video_c = null;
+        if (videoC != null) {
+            avcodec_close(videoC);
+            videoC = null;
         }
-        if (audio_c != null) {
-            avcodec_close(audio_c);
-            audio_c = null;
+        if (audioC != null) {
+            avcodec_close(audioC);
+            audioC = null;
         }
-        if (picture_buf != null) {
-            av_free(picture_buf);
-            picture_buf = null;
+        if (pictureBuf != null) {
+            av_free(pictureBuf);
+            pictureBuf = null;
         }
         if (picture != null) {
             avcodec_free_frame(picture);
             picture = null;
         }
-        if (tmp_picture != null) {
-            avcodec_free_frame(tmp_picture);
-            tmp_picture = null;
+        if (tmpPicture != null) {
+            avcodec_free_frame(tmpPicture);
+            tmpPicture = null;
         }
-        if (video_outbuf != null) {
-            av_free(video_outbuf);
-            video_outbuf = null;
+        if (videoOutbuf != null) {
+            av_free(videoOutbuf);
+            videoOutbuf = null;
         }
         if (frame != null) {
             avcodec_free_frame(frame);
             frame = null;
         }
-        if (samples_out != null) {
-            for (int i = 0; i < samples_out.length; i++) {
-                av_free(samples_out[i].position(0));
+        if (samplesOut != null) {
+            for (int i = 0; i < samplesOut.length; i++) {
+                av_free(samplesOut[i].position(0));
             }
-            samples_out = null;
+            samplesOut = null;
         }
-        if (audio_outbuf != null) {
-            av_free(audio_outbuf);
-            audio_outbuf = null;
+        if (audioOutbuf != null) {
+            av_free(audioOutbuf);
+            audioOutbuf = null;
         }
-        video_st = null;
-        audio_st = null;
+        videoSt = null;
+        audioSt = null;
 
         if (oc != null && !oc.isNull()) {
             if ((oformat.flags() & AVFMT_NOFILE) == 0) {
@@ -245,14 +249,14 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
             oc = null;
         }
 
-        if (img_convert_ctx != null) {
-            sws_freeContext(img_convert_ctx);
-            img_convert_ctx = null;
+        if (imgConvertCtx != null) {
+            sws_freeContext(imgConvertCtx);
+            imgConvertCtx = null;
         }
 
-        if (samples_convert_ctx != null) {
-            swr_free(samples_convert_ctx);
-            samples_convert_ctx = null;
+        if (samplesConvertCtx != null) {
+            swr_free(samplesConvertCtx);
+            samplesConvertCtx = null;
         }
     }
     @Override protected void finalize() throws Throwable {
@@ -283,18 +287,18 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
     public void startUnsafe() throws Exception {
         int ret;
         picture = null;
-        tmp_picture = null;
-        picture_buf = null;
+        tmpPicture = null;
+        pictureBuf = null;
         frame = null;
-        video_outbuf = null;
-        audio_outbuf = null;
+        videoOutbuf = null;
+        audioOutbuf = null;
         oc = null;
-        video_c = null;
-        audio_c = null;
-        video_st = null;
-        audio_st = null;
-        got_video_packet = new int[1];
-        got_audio_packet = new int[1];
+        videoC = null;
+        audioC = null;
+        videoSt = null;
+        audioSt = null;
+        gotVideoPacket = new int[1];
+        gotAudioPacket = new int[1];
 
         /* auto detect the output format from the name. */
         String format_name = format == null || format.length() == 0 ? null : format;
@@ -334,87 +338,87 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
             }
 
             /* find the video encoder */
-            if ((video_codec = avcodec_find_encoder_by_name(videoCodecName)) == null &&
-                (video_codec = avcodec_find_encoder(oformat.video_codec())) == null) {
+            if ((videoCodecAVCodec = avcodec_find_encoder_by_name(videoCodecName)) == null &&
+                (videoCodecAVCodec = avcodec_find_encoder(oformat.video_codec())) == null) {
                 release();
                 throw new Exception("avcodec_find_encoder() error: Video codec not found.");
             }
 
             AVRational frame_rate = av_d2q(frameRate, 1001000);
-            AVRational supported_framerates = video_codec.supported_framerates();
+            AVRational supported_framerates = videoCodecAVCodec.supported_framerates();
             if (supported_framerates != null) {
                 int idx = av_find_nearest_q_idx(frame_rate, supported_framerates);
                 frame_rate = supported_framerates.position(idx);
             }
 
             /* add a video output stream */
-            if ((video_st = avformat_new_stream(oc, video_codec)) == null) {
+            if ((videoSt = avformat_new_stream(oc, videoCodecAVCodec)) == null) {
                 release();
                 throw new Exception("avformat_new_stream() error: Could not allocate video stream.");
             }
-            video_c = video_st.codec();
-            video_c.codec_id(oformat.video_codec());
-            video_c.codec_type(AVMEDIA_TYPE_VIDEO);
+            videoC = videoSt.codec();
+            videoC.codec_id(oformat.video_codec());
+            videoC.codec_type(AVMEDIA_TYPE_VIDEO);
 
             /* put sample parameters */
-            video_c.bit_rate(videoBitrate);
+            videoC.bit_rate(videoBitrate);
             /* resolution must be a multiple of two, but round up to 16 as often required */
-            video_c.width((imageWidth + 15) / 16 * 16);
-            video_c.height(imageHeight);
+            videoC.width((imageWidth + 15) / 16 * 16);
+            videoC.height(imageHeight);
             /* time base: this is the fundamental unit of time (in seconds) in terms
                of which frame timestamps are represented. for fixed-fps content,
                timebase should be 1/framerate and timestamp increments should be
                identically 1. */
-            video_c.time_base(av_inv_q(frame_rate));
-            video_c.gop_size(12); /* emit one intra frame every twelve frames at most */
+            videoC.time_base(av_inv_q(frame_rate));
+            videoC.gop_size(12); /* emit one intra frame every twelve frames at most */
             if (videoQuality >= 0) {
-                video_c.flags(video_c.flags() | CODEC_FLAG_QSCALE);
-                video_c.global_quality((int)Math.round(FF_QP2LAMBDA * videoQuality));
+                videoC.flags(videoC.flags() | CODEC_FLAG_QSCALE);
+                videoC.global_quality((int)Math.round(FF_QP2LAMBDA * videoQuality));
             }
 
             if (pixelFormat != AV_PIX_FMT_NONE) {
-                video_c.pix_fmt(pixelFormat);
-            } else if (video_c.codec_id() == AV_CODEC_ID_RAWVIDEO || video_c.codec_id() == AV_CODEC_ID_PNG ||
-                       video_c.codec_id() == AV_CODEC_ID_HUFFYUV  || video_c.codec_id() == AV_CODEC_ID_FFV1) {
-                video_c.pix_fmt(AV_PIX_FMT_RGB32);   // appropriate for common lossless formats
+                videoC.pix_fmt(pixelFormat);
+            } else if (videoC.codec_id() == AV_CODEC_ID_RAWVIDEO || videoC.codec_id() == AV_CODEC_ID_PNG ||
+                       videoC.codec_id() == AV_CODEC_ID_HUFFYUV  || videoC.codec_id() == AV_CODEC_ID_FFV1) {
+                videoC.pix_fmt(AV_PIX_FMT_RGB32);   // appropriate for common lossless formats
             } else {
-                video_c.pix_fmt(AV_PIX_FMT_YUV420P); // lossy, but works with about everything
+                videoC.pix_fmt(AV_PIX_FMT_YUV420P); // lossy, but works with about everything
             }
 
-            if (video_c.codec_id() == AV_CODEC_ID_MPEG2VIDEO) {
+            if (videoC.codec_id() == AV_CODEC_ID_MPEG2VIDEO) {
                 /* just for testing, we also add B frames */
-                video_c.max_b_frames(2);
-            } else if (video_c.codec_id() == AV_CODEC_ID_MPEG1VIDEO) {
+                videoC.max_b_frames(2);
+            } else if (videoC.codec_id() == AV_CODEC_ID_MPEG1VIDEO) {
                 /* Needed to avoid using macroblocks in which some coeffs overflow.
                    This does not happen with normal video, it just happens here as
                    the motion of the chroma plane does not match the luma plane. */
-                video_c.mb_decision(2);
-            } else if (video_c.codec_id() == AV_CODEC_ID_H263) {
+                videoC.mb_decision(2);
+            } else if (videoC.codec_id() == AV_CODEC_ID_H263) {
                 // H.263 does not support any other resolution than the following
                 if (imageWidth <= 128 && imageHeight <= 96) {
-                    video_c.width(128).height(96);
+                    videoC.width(128).height(96);
                 } else if (imageWidth <= 176 && imageHeight <= 144) {
-                    video_c.width(176).height(144);
+                    videoC.width(176).height(144);
                 } else if (imageWidth <= 352 && imageHeight <= 288) {
-                    video_c.width(352).height(288);
+                    videoC.width(352).height(288);
                 } else if (imageWidth <= 704 && imageHeight <= 576) {
-                    video_c.width(704).height(576);
+                    videoC.width(704).height(576);
                 } else {
-                    video_c.width(1408).height(1152);
+                    videoC.width(1408).height(1152);
                 }
-            } else if (video_c.codec_id() == AV_CODEC_ID_H264) {
+            } else if (videoC.codec_id() == AV_CODEC_ID_H264) {
                 // default to constrained baseline to produce content that plays back on anything,
                 // without any significant tradeoffs for most use cases
-                video_c.profile(AVCodecContext.FF_PROFILE_H264_CONSTRAINED_BASELINE);
+                videoC.profile(AVCodecContext.FF_PROFILE_H264_CONSTRAINED_BASELINE);
             }
 
             // some formats want stream headers to be separate
             if ((oformat.flags() & AVFMT_GLOBALHEADER) != 0) {
-                video_c.flags(video_c.flags() | CODEC_FLAG_GLOBAL_HEADER);
+                videoC.flags(videoC.flags() | CODEC_FLAG_GLOBAL_HEADER);
             }
 
-            if ((video_codec.capabilities() & CODEC_CAP_EXPERIMENTAL) != 0) {
-                video_c.strict_std_compliance(AVCodecContext.FF_COMPLIANCE_EXPERIMENTAL);
+            if ((videoCodecAVCodec.capabilities() & CODEC_CAP_EXPERIMENTAL) != 0) {
+                videoC.strict_std_compliance(AVCodecContext.FF_COMPLIANCE_EXPERIMENTAL);
             }
         }
 
@@ -431,59 +435,59 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
             }
 
             /* find the audio encoder */
-            if ((audio_codec = avcodec_find_encoder_by_name(audioCodecName)) == null &&
-                (audio_codec = avcodec_find_encoder(oformat.audio_codec())) == null) {
+            if ((audioCodecAVCodec = avcodec_find_encoder_by_name(audioCodecName)) == null &&
+                (audioCodecAVCodec = avcodec_find_encoder(oformat.audio_codec())) == null) {
                 release();
                 throw new Exception("avcodec_find_encoder() error: Audio codec not found.");
             }
 
-            if ((audio_st = avformat_new_stream(oc, audio_codec)) == null) {
+            if ((audioSt = avformat_new_stream(oc, audioCodecAVCodec)) == null) {
                 release();
                 throw new Exception("avformat_new_stream() error: Could not allocate audio stream.");
             }
-            audio_c = audio_st.codec();
-            audio_c.codec_id(oformat.audio_codec());
-            audio_c.codec_type(AVMEDIA_TYPE_AUDIO);
+            audioC = audioSt.codec();
+            audioC.codec_id(oformat.audio_codec());
+            audioC.codec_type(AVMEDIA_TYPE_AUDIO);
 
             /* put sample parameters */
-            audio_c.bit_rate(audioBitrate);
-            audio_c.sample_rate(sampleRate);
-            audio_c.channels(audioChannels);
-            audio_c.channel_layout(av_get_default_channel_layout(audioChannels));
+            audioC.bit_rate(audioBitrate);
+            audioC.sample_rate(sampleRate);
+            audioC.channels(audioChannels);
+            audioC.channel_layout(av_get_default_channel_layout(audioChannels));
             if (sampleFormat != AV_SAMPLE_FMT_NONE) {
-                audio_c.sample_fmt(sampleFormat);
-            } else if (audio_c.codec_id() == AV_CODEC_ID_AAC &&
-                    (audio_codec.capabilities() & CODEC_CAP_EXPERIMENTAL) != 0) {
-                audio_c.sample_fmt(AV_SAMPLE_FMT_FLTP);
+                audioC.sample_fmt(sampleFormat);
+            } else if (audioC.codec_id() == AV_CODEC_ID_AAC &&
+                    (audioCodecAVCodec.capabilities() & CODEC_CAP_EXPERIMENTAL) != 0) {
+                audioC.sample_fmt(AV_SAMPLE_FMT_FLTP);
             } else {
-                audio_c.sample_fmt(AV_SAMPLE_FMT_S16);
+                audioC.sample_fmt(AV_SAMPLE_FMT_S16);
             }
-            audio_c.time_base().num(1).den(sampleRate);
-            switch (audio_c.sample_fmt()) {
+            audioC.time_base().num(1).den(sampleRate);
+            switch (audioC.sample_fmt()) {
                 case AV_SAMPLE_FMT_U8:
-                case AV_SAMPLE_FMT_U8P:  audio_c.bits_per_raw_sample(8);  break;
+                case AV_SAMPLE_FMT_U8P:  audioC.bits_per_raw_sample(8);  break;
                 case AV_SAMPLE_FMT_S16:
-                case AV_SAMPLE_FMT_S16P: audio_c.bits_per_raw_sample(16); break;
+                case AV_SAMPLE_FMT_S16P: audioC.bits_per_raw_sample(16); break;
                 case AV_SAMPLE_FMT_S32:
-                case AV_SAMPLE_FMT_S32P: audio_c.bits_per_raw_sample(32); break;
+                case AV_SAMPLE_FMT_S32P: audioC.bits_per_raw_sample(32); break;
                 case AV_SAMPLE_FMT_FLT:
-                case AV_SAMPLE_FMT_FLTP: audio_c.bits_per_raw_sample(32); break;
+                case AV_SAMPLE_FMT_FLTP: audioC.bits_per_raw_sample(32); break;
                 case AV_SAMPLE_FMT_DBL:
-                case AV_SAMPLE_FMT_DBLP: audio_c.bits_per_raw_sample(64); break;
+                case AV_SAMPLE_FMT_DBLP: audioC.bits_per_raw_sample(64); break;
                 default: assert false;
             }
             if (audioQuality >= 0) {
-                audio_c.flags(audio_c.flags() | CODEC_FLAG_QSCALE);
-                audio_c.global_quality((int)Math.round(FF_QP2LAMBDA * audioQuality));
+                audioC.flags(audioC.flags() | CODEC_FLAG_QSCALE);
+                audioC.global_quality((int)Math.round(FF_QP2LAMBDA * audioQuality));
             }
 
             // some formats want stream headers to be separate
             if ((oformat.flags() & AVFMT_GLOBALHEADER) != 0) {
-                audio_c.flags(audio_c.flags() | CODEC_FLAG_GLOBAL_HEADER);
+                audioC.flags(audioC.flags() | CODEC_FLAG_GLOBAL_HEADER);
             }
 
-            if ((audio_codec.capabilities() & CODEC_CAP_EXPERIMENTAL) != 0) {
-                audio_c.strict_std_compliance(AVCodecContext.FF_COMPLIANCE_EXPERIMENTAL);
+            if ((audioCodecAVCodec.capabilities() & CODEC_CAP_EXPERIMENTAL) != 0) {
+                audioC.strict_std_compliance(AVCodecContext.FF_COMPLIANCE_EXPERIMENTAL);
             }
         }
 
@@ -491,7 +495,7 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
 
         /* now that all the parameters are set, we can open the audio and
            video codecs and allocate the necessary encode buffers */
-        if (video_st != null) {
+        if (videoSt != null) {
             AVDictionary options = new AVDictionary(null);
             if (videoQuality >= 0) {
                 av_dict_set(options, "crf", "" + videoQuality, 0);
@@ -500,13 +504,13 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
                 av_dict_set(options, e.getKey(), e.getValue(), 0);
             }
             /* open the codec */
-            if ((ret = avcodec_open2(video_c, video_codec, options)) < 0) {
+            if ((ret = avcodec_open2(videoC, videoCodecAVCodec, options)) < 0) {
                 release();
                 throw new Exception("avcodec_open2() error " + ret + ": Could not open video codec.");
             }
             av_dict_free(options);
 
-            video_outbuf = null;
+            videoOutbuf = null;
             if ((oformat.flags() & AVFMT_RAWPICTURE) == 0) {
                 /* allocate output buffer */
                 /* XXX: API change will be done */
@@ -514,8 +518,8 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
                    as long as they're aligned enough for the architecture, and
                    they're freed appropriately (such as using av_free for buffers
                    allocated with av_malloc) */
-                video_outbuf_size = Math.max(256 * 1024, 8 * video_c.width() * video_c.height()); // a la ffmpeg.c
-                video_outbuf = new BytePointer(av_malloc(video_outbuf_size));
+                videoOutbufSize = Math.max(256 * 1024, 8 * videoC.width() * videoC.height()); // a la ffmpeg.c
+                videoOutbuf = new BytePointer(av_malloc(videoOutbufSize));
             }
 
             /* allocate the encoded raw picture */
@@ -525,21 +529,21 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
             }
             picture.pts(0); // magic required by libx264
 
-            int size = avpicture_get_size(video_c.pix_fmt(), video_c.width(), video_c.height());
-            if ((picture_buf = new BytePointer(av_malloc(size))).isNull()) {
+            int size = avpicture_get_size(videoC.pix_fmt(), videoC.width(), videoC.height());
+            if ((pictureBuf = new BytePointer(av_malloc(size))).isNull()) {
                 release();
                 throw new Exception("av_malloc() error: Could not allocate picture buffer.");
             }
 
             /* if the output format is not equal to the image format, then a temporary
                picture is needed too. It is then converted to the required output format */
-            if ((tmp_picture = avcodec_alloc_frame()) == null) {
+            if ((tmpPicture = avcodec_alloc_frame()) == null) {
                 release();
                 throw new Exception("avcodec_alloc_frame() error: Could not allocate temporary picture.");
             }
         }
 
-        if (audio_st != null) {
+        if (audioSt != null) {
             AVDictionary options = new AVDictionary(null);
             if (audioQuality >= 0) {
                 av_dict_set(options, "crf", "" + audioQuality, 0);
@@ -548,44 +552,44 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
                 av_dict_set(options, e.getKey(), e.getValue(), 0);
             }
             /* open the codec */
-            if ((ret = avcodec_open2(audio_c, audio_codec, options)) < 0) {
+            if ((ret = avcodec_open2(audioC, audioCodecAVCodec, options)) < 0) {
                 release();
                 throw new Exception("avcodec_open2() error " + ret + ": Could not open audio codec.");
             }
             av_dict_free(options);
 
-            audio_outbuf_size = 256 * 1024;
-            audio_outbuf = new BytePointer(av_malloc(audio_outbuf_size));
+            audioOutbufSize = 256 * 1024;
+            audioOutbuf = new BytePointer(av_malloc(audioOutbufSize));
 
             /* ugly hack for PCM codecs (will be removed ASAP with new PCM
                support to compute the input frame size in samples */
-            if (audio_c.frame_size() <= 1) {
-                audio_outbuf_size = FF_MIN_BUFFER_SIZE;
-                audio_input_frame_size = audio_outbuf_size / audio_c.channels();
-                switch (audio_c.codec_id()) {
+            if (audioC.frame_size() <= 1) {
+                audioOutbufSize = FF_MIN_BUFFER_SIZE;
+                audioInputFrameSize = audioOutbufSize / audioC.channels();
+                switch (audioC.codec_id()) {
                     case AV_CODEC_ID_PCM_S16LE:
                     case AV_CODEC_ID_PCM_S16BE:
                     case AV_CODEC_ID_PCM_U16LE:
                     case AV_CODEC_ID_PCM_U16BE:
-                        audio_input_frame_size >>= 1;
+                        audioInputFrameSize >>= 1;
                         break;
                     default:
                         break;
                 }
             } else {
-                audio_input_frame_size = audio_c.frame_size();
+                audioInputFrameSize = audioC.frame_size();
             }
             //int bufferSize = audio_input_frame_size * audio_c.bits_per_raw_sample()/8 * audio_c.channels();
-            int planes = av_sample_fmt_is_planar(audio_c.sample_fmt()) != 0 ? (int)audio_c.channels() : 1;
-            int data_size = av_samples_get_buffer_size((IntPointer)null, audio_c.channels(),
-                    audio_input_frame_size, audio_c.sample_fmt(), 1) / planes;
-            samples_out = new BytePointer[planes];
-            for (int i = 0; i < samples_out.length; i++) {
-                samples_out[i] = new BytePointer(av_malloc(data_size)).capacity(data_size);
+            int planes = av_sample_fmt_is_planar(audioC.sample_fmt()) != 0 ? (int) audioC.channels() : 1;
+            int data_size = av_samples_get_buffer_size((IntPointer)null, audioC.channels(),
+                    audioInputFrameSize, audioC.sample_fmt(), 1) / planes;
+            samplesOut = new BytePointer[planes];
+            for (int i = 0; i < samplesOut.length; i++) {
+                samplesOut[i] = new BytePointer(av_malloc(data_size)).capacity(data_size);
             }
-            samples_in = new Pointer[AVFrame.AV_NUM_DATA_POINTERS];
-            samples_in_ptr  = new PointerPointer(AVFrame.AV_NUM_DATA_POINTERS);
-            samples_out_ptr = new PointerPointer(AVFrame.AV_NUM_DATA_POINTERS);
+            samplesIn = new Pointer[AVFrame.AV_NUM_DATA_POINTERS];
+            samplesInPtr = new PointerPointer(AVFrame.AV_NUM_DATA_POINTERS);
+            samplesOutPtr = new PointerPointer(AVFrame.AV_NUM_DATA_POINTERS);
 
             /* allocate the audio frame */
             if ((frame = avcodec_alloc_frame()) == null) {
@@ -612,10 +616,10 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
         if (oc != null) {
             try {
                 /* flush all the buffers */
-                while (video_st != null && record((IplImage)null, AV_PIX_FMT_NONE));
-                while (audio_st != null && record((AVFrame)null));
+                while (videoSt != null && record((IplImage)null, AV_PIX_FMT_NONE));
+                while (audioSt != null && record((AVFrame)null));
 
-                if (interleaved && video_st != null && audio_st != null) {
+                if (interleaved && videoSt != null && audioSt != null) {
                     av_interleaved_write_frame(oc, null);
                 } else {
                     av_write_frame(oc, null);
@@ -684,7 +688,7 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
         return record(image, AV_PIX_FMT_NONE);
     }
     public boolean record(IplImage image, int pixelFormat) throws Exception {
-        if (video_st == null) {
+        if (videoSt == null) {
             throw new Exception("No video output stream (Is imageWidth > 0 && imageHeight > 0 and has start() been called?)");
         }
         int ret;
@@ -722,19 +726,19 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
                 }
             }
 
-            if (video_c.pix_fmt() != pixelFormat || video_c.width() != width || video_c.height() != height) {
+            if (videoC.pix_fmt() != pixelFormat || videoC.width() != width || videoC.height() != height) {
                 /* convert to the codec pixel format if needed */
-            	img_convert_ctx = sws_getCachedContext(img_convert_ctx,
-						video_c.width(), video_c.height(), pixelFormat,
-						video_c.width(), video_c.height(), video_c.pix_fmt(),
+            	imgConvertCtx = sws_getCachedContext(imgConvertCtx,
+						videoC.width(), videoC.height(), pixelFormat,
+						videoC.width(), videoC.height(), videoC.pix_fmt(),
                         SWS_BILINEAR,null, null, (DoublePointer)null);
-                if (img_convert_ctx == null) {
+                if (imgConvertCtx == null) {
                     throw new Exception("sws_getCachedContext() error: Cannot initialize the conversion context.");
                 }
-                avpicture_fill(new AVPicture(tmp_picture), data, pixelFormat, width, height);
-                avpicture_fill(new AVPicture(picture), picture_buf, video_c.pix_fmt(), video_c.width(), video_c.height());
-                tmp_picture.linesize(0, step);
-                sws_scale(img_convert_ctx, new PointerPointer(tmp_picture), tmp_picture.linesize(),
+                avpicture_fill(new AVPicture(tmpPicture), data, pixelFormat, width, height);
+                avpicture_fill(new AVPicture(picture), pictureBuf, videoC.pix_fmt(), videoC.width(), videoC.height());
+                tmpPicture.linesize(0, step);
+                sws_scale(imgConvertCtx, new PointerPointer(tmpPicture), tmpPicture.linesize(),
                           0, height, new PointerPointer(picture), picture.linesize());
             } else {
                 avpicture_fill(new AVPicture(picture), data, pixelFormat, width, height);
@@ -747,31 +751,31 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
                 return false;
             }
             /* raw video case. The API may change slightly in the future for that? */
-            av_init_packet(video_pkt);
-            video_pkt.flags(video_pkt.flags() | AV_PKT_FLAG_KEY);
-            video_pkt.stream_index(video_st.index());
-            video_pkt.data(new BytePointer(picture));
-            video_pkt.size(Loader.sizeof(AVPicture.class));
+            av_init_packet(videoPkt);
+            videoPkt.flags(videoPkt.flags() | AV_PKT_FLAG_KEY);
+            videoPkt.stream_index(videoSt.index());
+            videoPkt.data(new BytePointer(picture));
+            videoPkt.size(Loader.sizeof(AVPicture.class));
         } else {
             /* encode the image */
-            av_init_packet(video_pkt);
-            video_pkt.data(video_outbuf);
-            video_pkt.size(video_outbuf_size);
-            picture.quality(video_c.global_quality());
-            if ((ret = avcodec_encode_video2(video_c, video_pkt, image == null ? null : picture, got_video_packet)) < 0) {
+            av_init_packet(videoPkt);
+            videoPkt.data(videoOutbuf);
+            videoPkt.size(videoOutbufSize);
+            picture.quality(videoC.global_quality());
+            if ((ret = avcodec_encode_video2(videoC, videoPkt, image == null ? null : picture, gotVideoPacket)) < 0) {
                 throw new Exception("avcodec_encode_video2() error " + ret + ": Could not encode video packet.");
             }
             picture.pts(picture.pts() + 1); // magic required by libx264
 
             /* if zero size, it means the image was buffered */
-            if (got_video_packet[0] != 0) {
-                if (video_pkt.pts() != AV_NOPTS_VALUE) {
-                    video_pkt.pts(av_rescale_q(video_pkt.pts(), video_c.time_base(), video_st.time_base()));
+            if (gotVideoPacket[0] != 0) {
+                if (videoPkt.pts() != AV_NOPTS_VALUE) {
+                    videoPkt.pts(av_rescale_q(videoPkt.pts(), videoC.time_base(), videoSt.time_base()));
                 }
-                if (video_pkt.dts() != AV_NOPTS_VALUE) {
-                    video_pkt.dts(av_rescale_q(video_pkt.dts(), video_c.time_base(), video_st.time_base()));
+                if (videoPkt.dts() != AV_NOPTS_VALUE) {
+                    videoPkt.dts(av_rescale_q(videoPkt.dts(), videoC.time_base(), videoSt.time_base()));
                 }
-                video_pkt.stream_index(video_st.index());
+                videoPkt.stream_index(videoSt.index());
             } else {
                 return false;
             }
@@ -779,12 +783,12 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
 
         synchronized (oc) {
             /* write the compressed frame in the media file */
-            if (interleaved && audio_st != null) {
-                if ((ret = av_interleaved_write_frame(oc, video_pkt)) < 0) {
+            if (interleaved && audioSt != null) {
+                if ((ret = av_interleaved_write_frame(oc, videoPkt)) < 0) {
                     throw new Exception("av_interleaved_write_frame() error " + ret + " while writing interleaved video frame.");
                 }
             } else {
-                if ((ret = av_write_frame(oc, video_pkt)) < 0) {
+                if ((ret = av_write_frame(oc, videoPkt)) < 0) {
                     throw new Exception("av_write_frame() error " + ret + " while writing video frame.");
                 }
             }
@@ -793,7 +797,7 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
     }
 
     @Override public boolean record(int sampleRate, Buffer ... samples) throws Exception {
-        if (audio_st == null) {
+        if (audioSt == null) {
             throw new Exception("No audio output stream (Is audioChannels > 0 and has start() been called?)");
         }
         int ret;
@@ -802,21 +806,21 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
         int inputFormat = AV_SAMPLE_FMT_NONE;
         int inputChannels = samples.length > 1 ? 1 : audioChannels;
         int inputDepth = 0;
-        int outputFormat = audio_c.sample_fmt();
-        int outputChannels = samples_out.length > 1 ? 1 : audioChannels;
+        int outputFormat = audioC.sample_fmt();
+        int outputChannels = samplesOut.length > 1 ? 1 : audioChannels;
         int outputDepth = av_get_bytes_per_sample(outputFormat);
         if (sampleRate <= 0) {
-            sampleRate = audio_c.sample_rate();
+            sampleRate = audioC.sample_rate();
         }
         if (samples[0] instanceof ByteBuffer) {
             inputFormat = samples.length > 1 ? AV_SAMPLE_FMT_U8P : AV_SAMPLE_FMT_U8;
             inputDepth = 1;
             for (int i = 0; i < samples.length; i++) {
                 ByteBuffer b = (ByteBuffer)samples[i];
-                if (samples_in[i] instanceof BytePointer && samples_in[i].capacity() >= inputSize && b.hasArray()) {
-                    ((BytePointer)samples_in[i]).position(0).put(b.array(), b.position(), inputSize);
+                if (samplesIn[i] instanceof BytePointer && samplesIn[i].capacity() >= inputSize && b.hasArray()) {
+                    ((BytePointer) samplesIn[i]).position(0).put(b.array(), b.position(), inputSize);
                 } else {
-                    samples_in[i] = new BytePointer(b);
+                    samplesIn[i] = new BytePointer(b);
                 }
             }
         } else if (samples[0] instanceof ShortBuffer) {
@@ -824,10 +828,10 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
             inputDepth = 2;
             for (int i = 0; i < samples.length; i++) {
                 ShortBuffer b = (ShortBuffer)samples[i];
-                if (samples_in[i] instanceof ShortPointer && samples_in[i].capacity() >= inputSize && b.hasArray()) {
-                    ((ShortPointer)samples_in[i]).position(0).put(b.array(), samples[i].position(), inputSize);
+                if (samplesIn[i] instanceof ShortPointer && samplesIn[i].capacity() >= inputSize && b.hasArray()) {
+                    ((ShortPointer) samplesIn[i]).position(0).put(b.array(), samples[i].position(), inputSize);
                 } else {
-                    samples_in[i] = new ShortPointer(b);
+                    samplesIn[i] = new ShortPointer(b);
                 }
             }
         } else if (samples[0] instanceof IntBuffer) {
@@ -835,10 +839,10 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
             inputDepth = 4;
             for (int i = 0; i < samples.length; i++) {
                 IntBuffer b = (IntBuffer)samples[i];
-                if (samples_in[i] instanceof IntPointer && samples_in[i].capacity() >= inputSize && b.hasArray()) {
-                    ((IntPointer)samples_in[i]).position(0).put(b.array(), samples[i].position(), inputSize);
+                if (samplesIn[i] instanceof IntPointer && samplesIn[i].capacity() >= inputSize && b.hasArray()) {
+                    ((IntPointer) samplesIn[i]).position(0).put(b.array(), samples[i].position(), inputSize);
                 } else {
-                    samples_in[i] = new IntPointer(b);
+                    samplesIn[i] = new IntPointer(b);
                 }
             }
         } else if (samples[0] instanceof FloatBuffer) {
@@ -846,10 +850,10 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
             inputDepth = 4;
             for (int i = 0; i < samples.length; i++) {
                 FloatBuffer b = (FloatBuffer)samples[i];
-                if (samples_in[i] instanceof FloatPointer && samples_in[i].capacity() >= inputSize && b.hasArray()) {
-                    ((FloatPointer)samples_in[i]).position(0).put(b.array(), b.position(), inputSize);
+                if (samplesIn[i] instanceof FloatPointer && samplesIn[i].capacity() >= inputSize && b.hasArray()) {
+                    ((FloatPointer) samplesIn[i]).position(0).put(b.array(), b.position(), inputSize);
                 } else {
-                    samples_in[i] = new FloatPointer(b);
+                    samplesIn[i] = new FloatPointer(b);
                 }
             }
         } else if (samples[0] instanceof DoubleBuffer) {
@@ -857,61 +861,61 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
             inputDepth = 8;
             for (int i = 0; i < samples.length; i++) {
                 DoubleBuffer b = (DoubleBuffer)samples[i];
-                if (samples_in[i] instanceof DoublePointer && samples_in[i].capacity() >= inputSize && b.hasArray()) {
-                    ((DoublePointer)samples_in[i]).position(0).put(b.array(), b.position(), inputSize);
+                if (samplesIn[i] instanceof DoublePointer && samplesIn[i].capacity() >= inputSize && b.hasArray()) {
+                    ((DoublePointer) samplesIn[i]).position(0).put(b.array(), b.position(), inputSize);
                 } else {
-                    samples_in[i] = new DoublePointer(b);
+                    samplesIn[i] = new DoublePointer(b);
                 }
             }
         } else {
             throw new Exception("Audio samples Buffer has unsupported type: " + samples);
         }
 
-        if (samples_convert_ctx == null) {
-            samples_convert_ctx = swr_alloc_set_opts(null,
-                    audio_c.channel_layout(), outputFormat, audio_c.sample_rate(),
-                    audio_c.channel_layout(), inputFormat, sampleRate, 0, null);
-            if (samples_convert_ctx == null) {
+        if (samplesConvertCtx == null) {
+            samplesConvertCtx = swr_alloc_set_opts(null,
+                    audioC.channel_layout(), outputFormat, audioC.sample_rate(),
+                    audioC.channel_layout(), inputFormat, sampleRate, 0, null);
+            if (samplesConvertCtx == null) {
                 throw new Exception("swr_alloc_set_opts() error: Cannot allocate the conversion context.");
-            } else if ((ret = swr_init(samples_convert_ctx)) < 0) {
+            } else if ((ret = swr_init(samplesConvertCtx)) < 0) {
                 throw new Exception("swr_init() error " + ret + ": Cannot initialize the conversion context.");
             }
         }
 
         for (int i = 0; i < samples.length; i++) {
-            samples_in[i].position(samples_in[i].position() * inputDepth).
-                    limit((samples_in[i].position() + inputSize) * inputDepth);
+            samplesIn[i].position(samplesIn[i].position() * inputDepth).
+                    limit((samplesIn[i].position() + inputSize) * inputDepth);
         }
         while (true) {
-            int inputCount = (samples_in[0].limit() - samples_in[0].position()) / (inputChannels * inputDepth);
-            int outputCount = (samples_out[0].limit() - samples_out[0].position()) / (outputChannels * outputDepth);
-            inputCount = Math.min(inputCount, 2 * (outputCount * sampleRate) / audio_c.sample_rate());
+            int inputCount = (samplesIn[0].limit() - samplesIn[0].position()) / (inputChannels * inputDepth);
+            int outputCount = (samplesOut[0].limit() - samplesOut[0].position()) / (outputChannels * outputDepth);
+            inputCount = Math.min(inputCount, 2 * (outputCount * sampleRate) / audioC.sample_rate());
             for (int i = 0; i < samples.length; i++) {
-                samples_in_ptr.put(i, samples_in[i]);
+                samplesInPtr.put(i, samplesIn[i]);
             }
-            for (int i = 0; i < samples_out.length; i++) {
-                samples_out_ptr.put(i, samples_out[i]);
+            for (int i = 0; i < samplesOut.length; i++) {
+                samplesOutPtr.put(i, samplesOut[i]);
             }
-            if ((ret = swr_convert(samples_convert_ctx, samples_out_ptr, outputCount, samples_in_ptr, inputCount)) < 0) {
+            if ((ret = swr_convert(samplesConvertCtx, samplesOutPtr, outputCount, samplesInPtr, inputCount)) < 0) {
                 throw new Exception("swr_convert() error " + ret + ": Cannot convert audio samples.");
             } else if (ret == 0) {
                 break;
             }
             for (int i = 0; i < samples.length; i++) {
-                samples_in[i].position(samples_in[i].position() + inputCount * inputChannels * inputDepth);
+                samplesIn[i].position(samplesIn[i].position() + inputCount * inputChannels * inputDepth);
             }
-            for (int i = 0; i < samples_out.length; i++) {
-                samples_out[i].position(samples_out[i].position() + ret * outputChannels * outputDepth);
+            for (int i = 0; i < samplesOut.length; i++) {
+                samplesOut[i].position(samplesOut[i].position() + ret * outputChannels * outputDepth);
             }
 
-            if (samples_out[0].position() >= samples_out[0].limit()) {
-                frame.nb_samples(audio_input_frame_size);
-                avcodec_fill_audio_frame(frame, audio_c.channels(), outputFormat, samples_out[0], samples_out[0].limit(), 0);
-                for (int i = 0; i < samples_out.length; i++) {
-                    frame.data(i, samples_out[i].position(0));
-                    frame.linesize(i, samples_out[i].limit());
+            if (samplesOut[0].position() >= samplesOut[0].limit()) {
+                frame.nb_samples(audioInputFrameSize);
+                avcodec_fill_audio_frame(frame, audioC.channels(), outputFormat, samplesOut[0], samplesOut[0].limit(), 0);
+                for (int i = 0; i < samplesOut.length; i++) {
+                    frame.data(i, samplesOut[i].position(0));
+                    frame.linesize(i, samplesOut[i].limit());
                 }
-                frame.quality(audio_c.global_quality());
+                frame.quality(audioC.global_quality());
                 record(frame);
             }
         }
@@ -921,33 +925,33 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
     boolean record(AVFrame frame) throws Exception {
         int ret;
 
-        av_init_packet(audio_pkt);
-        audio_pkt.data(audio_outbuf);
-        audio_pkt.size(audio_outbuf_size);
-        if ((ret = avcodec_encode_audio2(audio_c, audio_pkt, frame, got_audio_packet)) < 0) {
+        av_init_packet(audioPkt);
+        audioPkt.data(audioOutbuf);
+        audioPkt.size(audioOutbufSize);
+        if ((ret = avcodec_encode_audio2(audioC, audioPkt, frame, gotAudioPacket)) < 0) {
             throw new Exception("avcodec_encode_audio2() error " + ret + ": Could not encode audio packet.");
         }
-        if (got_audio_packet[0] != 0) {
-            if (audio_pkt.pts() != AV_NOPTS_VALUE) {
-                audio_pkt.pts(av_rescale_q(audio_pkt.pts(), audio_c.time_base(), audio_c.time_base()));
+        if (gotAudioPacket[0] != 0) {
+            if (audioPkt.pts() != AV_NOPTS_VALUE) {
+                audioPkt.pts(av_rescale_q(audioPkt.pts(), audioC.time_base(), audioC.time_base()));
             }
-            if (audio_pkt.dts() != AV_NOPTS_VALUE) {
-                audio_pkt.dts(av_rescale_q(audio_pkt.dts(), audio_c.time_base(), audio_c.time_base()));
+            if (audioPkt.dts() != AV_NOPTS_VALUE) {
+                audioPkt.dts(av_rescale_q(audioPkt.dts(), audioC.time_base(), audioC.time_base()));
             }
-            audio_pkt.flags(audio_pkt.flags() | AV_PKT_FLAG_KEY);
-            audio_pkt.stream_index(audio_st.index());
+            audioPkt.flags(audioPkt.flags() | AV_PKT_FLAG_KEY);
+            audioPkt.stream_index(audioSt.index());
         } else {
             return false;
         }
 
         /* write the compressed frame in the media file */
         synchronized (oc) {
-            if (interleaved && video_st != null) {
-                if ((ret = av_interleaved_write_frame(oc, audio_pkt)) < 0) {
+            if (interleaved && videoSt != null) {
+                if ((ret = av_interleaved_write_frame(oc, audioPkt)) < 0) {
                     throw new Exception("av_interleaved_write_frame() error " + ret + " while writing interleaved audio frame.");
                 }
             } else {
-                if ((ret = av_write_frame(oc, audio_pkt)) < 0) {
+                if ((ret = av_write_frame(oc, audioPkt)) < 0) {
                     throw new Exception("av_write_frame() error " + ret + " while writing audio frame.");
                 }
             }

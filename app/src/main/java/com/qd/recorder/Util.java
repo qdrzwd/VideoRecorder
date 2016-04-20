@@ -47,7 +47,7 @@ import com.qd.videorecorder.R;
 
 
 public class Util {
-	public static  ContentValues videoContentValues = null;
+	public static  ContentValues videoContentValues;
 	public static String getRecordingTimeFromMillis(long millis)
 	{
 		String strRecordingTime = null;

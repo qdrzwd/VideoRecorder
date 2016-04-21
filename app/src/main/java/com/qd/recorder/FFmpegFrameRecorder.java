@@ -747,9 +747,9 @@ public class FFmpegFrameRecorder extends FrameRecorder {
         int ret;
 
         int inputSize = samples[0].limit() - samples[0].position();
-        int inputFormat = AV_SAMPLE_FMT_NONE;
+        int inputFormat;
         int inputChannels = samples.length > 1 ? 1 : audioChannels;
-        int inputDepth = 0;
+        int inputDepth;
         int outputFormat = audioC.sample_fmt();
         int outputChannels = samplesOut.length > 1 ? 1 : audioChannels;
         int outputDepth = av_get_bytes_per_sample(outputFormat);

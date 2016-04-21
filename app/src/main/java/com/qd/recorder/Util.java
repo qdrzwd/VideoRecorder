@@ -50,7 +50,7 @@ public class Util {
 	public static  ContentValues videoContentValues;
 	public static String getRecordingTimeFromMillis(long millis)
 	{
-		String strRecordingTime = null;
+		String strRecordingTime;
 		int seconds = (int) (millis / 1000);
 		int minutes = seconds / 60;
 		int hours = minutes / 60;

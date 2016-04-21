@@ -50,7 +50,7 @@ public class RecorderThread extends Thread{
             }
             int timeIndex = 0;
             int pos = 0;
-            int byteIndex = 0;
+            int byteIndex;
             while (!mIsFinish.get()) {
                 if (mByteBuffer.position() > pos) {
                     for(byteIndex = 0;byteIndex < mSize;byteIndex++){

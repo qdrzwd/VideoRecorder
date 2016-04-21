@@ -193,7 +193,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	//获取第一幀的图片
 	private boolean isFirstFrame = true;
 
-	private int mIntValue;
+	private static int mIntValue;
 
 	private void initHandler(){
 		mHandler = new Handler(){
@@ -545,10 +545,9 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		 * @param data
 		 */
 		private void getFirstCapture(byte[] data){
-			
-			String captureBitmapPath = CONSTANTS.CAMERA_FOLDER_PATH;
-			
-			captureBitmapPath = Util.createImagePath(FFmpegRecorderActivity.this);
+
+			String captureBitmapPath = Util.createImagePath(FFmpegRecorderActivity.this);
+
 			YuvImage localYuvImage = new YuvImage(data, 17, previewWidth,previewHeight, null);
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			FileOutputStream outStream = null;
@@ -833,7 +832,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		private byte[] rotateYUV420Degree180(byte[] data, int imageWidth, int imageHeight)
 		{
 			byte [] yuv = new byte[imageWidth*imageHeight*3/2];
-			int i = 0;
+			int i;
 			int count = 0;
 
 			for (i = imageWidth * imageHeight - 1; i >= 0; i--) {
@@ -841,7 +840,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 				count++;
 			}
 
-			i = imageWidth * imageHeight * 3 / 2 - 1;
 			for (i = imageWidth * imageHeight * 3 / 2 - 1; i >= imageWidth
 					* imageHeight; i -= 2) {
 				yuv[count++] = data[i - 1];
@@ -939,7 +937,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		@Override
 		public void onPreviewFrame(byte[] data, Camera camera) {
 			//计算时间戳
-			long frameTimeStamp = 0L;
+			long frameTimeStamp;
 			if(mAudioTimestamp == 0L && firstTime > 0L) {
 				frameTimeStamp = 1000L * (System.currentTimeMillis() - firstTime);
 			}else if (mLastAudioTimestamp == mAudioTimestamp) {

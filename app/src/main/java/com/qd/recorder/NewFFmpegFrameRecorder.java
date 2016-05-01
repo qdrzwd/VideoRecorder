@@ -285,7 +285,7 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
         }
     }
     public void startUnsafe() throws Exception {
-        int ret;
+
         picture = null;
         tmpPicture = null;
         pictureBuf = null;
@@ -495,6 +495,7 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
 
         /* now that all the parameters are set, we can open the audio and
            video codecs and allocate the necessary encode buffers */
+        int ret;
         if (videoSt != null) {
             AVDictionary options = new AVDictionary(null);
             if (videoQuality >= 0) {
@@ -691,7 +692,6 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
         if (videoSt == null) {
             throw new Exception("No video output stream (Is imageWidth > 0 && imageHeight > 0 and has start() been called?)");
         }
-        int ret;
 
         if (image == null) {
             /* no more frame to compress. The codec has a latency of a few
@@ -702,9 +702,7 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
         	//image = rotate(image,90);
 
             int width = image.width();
-            int height = image.height();
             int step = image.widthStep();
-            BytePointer data = image.imageData();
 
             if (pixelFormat == AV_PIX_FMT_NONE) {
                 int depth = image.depth();
@@ -726,6 +724,8 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
                 }
             }
 
+            BytePointer data = image.imageData();
+            int height = image.height();
             if (videoC.pix_fmt() != pixelFormat || videoC.width() != width || videoC.height() != height) {
                 /* convert to the codec pixel format if needed */
             	imgConvertCtx = sws_getCachedContext(imgConvertCtx,
@@ -746,6 +746,7 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
             }
         }
 
+        int ret;
         if ((oformat.flags() & AVFMT_RAWPICTURE) != 0) {
             if (image == null) {
                 return false;
@@ -800,18 +801,13 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
         if (audioSt == null) {
             throw new Exception("No audio output stream (Is audioChannels > 0 and has start() been called?)");
         }
-        int ret;
 
         int inputSize = samples[0].limit() - samples[0].position();
-        int inputFormat;
-        int inputChannels = samples.length > 1 ? 1 : audioChannels;
         int inputDepth;
-        int outputFormat = audioC.sample_fmt();
-        int outputChannels = samplesOut.length > 1 ? 1 : audioChannels;
-        int outputDepth = av_get_bytes_per_sample(outputFormat);
         if (sampleRate <= 0) {
             sampleRate = audioC.sample_rate();
         }
+        int inputFormat;
         if (samples[0] instanceof ByteBuffer) {
             inputFormat = samples.length > 1 ? AV_SAMPLE_FMT_U8P : AV_SAMPLE_FMT_U8;
             inputDepth = 1;
@@ -871,6 +867,8 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
             throw new Exception("Audio samples Buffer has unsupported type: " + samples);
         }
 
+        int ret;
+        int outputFormat = audioC.sample_fmt();
         if (samplesConvertCtx == null) {
             samplesConvertCtx = swr_alloc_set_opts(null,
                     audioC.channel_layout(), outputFormat, audioC.sample_rate(),
@@ -886,6 +884,10 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
             samplesIn[i].position(samplesIn[i].position() * inputDepth).
                     limit((samplesIn[i].position() + inputSize) * inputDepth);
         }
+
+        int outputChannels = samplesOut.length > 1 ? 1 : audioChannels;
+        int outputDepth = av_get_bytes_per_sample(outputFormat);
+        int inputChannels = samples.length > 1 ? 1 : audioChannels;
         while (true) {
             int inputCount = (samplesIn[0].limit() - samplesIn[0].position()) / (inputChannels * inputDepth);
             int outputCount = (samplesOut[0].limit() - samplesOut[0].position()) / (outputChannels * outputDepth);

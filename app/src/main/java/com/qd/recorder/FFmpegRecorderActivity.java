@@ -1010,6 +1010,8 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 						mHandler.sendEmptyMessage(4);
 					
 					break;
+				default:
+					break;
 				}
 			}else{
 				//如果录制时间超过最大时间，保存视频

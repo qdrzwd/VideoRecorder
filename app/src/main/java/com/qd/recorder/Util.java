@@ -121,6 +121,8 @@ public class Util {
 		case Surface.ROTATION_270:
 			degrees = 270;
 			break;
+		default:
+			break;
 		}
 		return degrees;
 	}
@@ -143,6 +145,8 @@ public class Util {
 
 		case Surface.ROTATION_270:
 			degrees = 270;
+			break;
+		default:
 			break;
 		}
 		return degrees;

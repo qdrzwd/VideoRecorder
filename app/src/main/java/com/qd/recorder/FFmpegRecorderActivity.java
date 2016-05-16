@@ -70,8 +70,16 @@ import com.qd.videorecorder.R;
  */
 public class FFmpegRecorderActivity extends Activity implements OnClickListener, OnTouchListener {
 
-	private final static String CLASS_LABEL = "RecordActivity";
-	private final static String LOG_TAG = CLASS_LABEL;
+	private static final String CLASS_LABEL = "RecordActivity";
+	private static final String LOG_TAG = CLASS_LABEL;
+	//当前录制的质量，会影响视频清晰度和文件大小
+	private static final int CURRENT_RESOLUTION = CONSTANTS.RESOLUTION_MEDIUM_VALUE;
+	//录制的最长时间
+	private static final int RECORDING_TIME = 6000;
+	//录制的最短时间
+	private static final int RECORDING_MINIMUM_TIME = 6000;
+	//提示换个场景
+	private static final int RECORDING_CHANGE_TIME = 3000;
 
 	private PowerManager.WakeLock mWakeLock;
 	//视频文件的存放地址
@@ -102,8 +110,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	
 	//判断是否是前置摄像头
 	private boolean isPreviewOn;
-	//当前录制的质量，会影响视频清晰度和文件大小
-	private int currentResolution = CONSTANTS.RESOLUTION_MEDIUM_VALUE;
 	private Camera mCamera;
 
 	//预览的宽高和屏幕宽高
@@ -151,12 +157,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	private long totalTime;
 	//视频帧率
 	private int frameRate = 30;
-	//录制的最长时间
-	private int recordingTime = 6000;
-	//录制的最短时间
-	private int recordingMinimumTime = 6000;
-	//提示换个场景
-	private int recordingChangeTime = 3000;
 
 	private boolean recordFinish;
 	private  Dialog creatingProgress;
@@ -234,10 +234,10 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 					progressView.putProgressList((int) totalTime);
 					rec = false;
 					startPauseTime = System.currentTimeMillis();
-					if(totalTime >= recordingMinimumTime){
+					if(totalTime >= RECORDING_MINIMUM_TIME){
 						currentRecorderState = RecorderState.SUCCESS;
 						mHandler.sendEmptyMessage(2);
-					}else if(totalTime >= recordingChangeTime){
+					}else if(totalTime >= RECORDING_CHANGE_TIME){
 						currentRecorderState = RecorderState.CHANGE;
 						mHandler.sendEmptyMessage(2);
 					}
@@ -344,7 +344,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		stateImageView = (ImageView) findViewById(R.id.recorder_surface_state);
 		
 		progressView = (ProgressView) findViewById(R.id.recorder_progress);
-		progressView.setTotalTime(recordingTime);
+		progressView.setTotalTime(RECORDING_TIME);
 		cancelBtn = (Button) findViewById(R.id.recorder_cancel);
 		cancelBtn.setOnClickListener(this);
 		nextBtn = (Button) findViewById(R.id.recorder_next);
@@ -394,7 +394,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 
 				handleSurfaceChanged();
 				if(recorderThread == null) {
-					recorderThread = new RecorderThread(yuvIplImage, videoRecorder, previewHeight * previewWidth * 3 / 2,frameRate*(recordingTime/1000));
+					recorderThread = new RecorderThread(yuvIplImage, videoRecorder, previewHeight * previewWidth * 3 / 2,frameRate*(RECORDING_TIME /1000));
 					recorderThread.start();
 				}
 				//设置surface的宽高
@@ -464,7 +464,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	private void initVideoRecorder() {
 		strVideoPath = Util.createFinalPath(this);//Util.createTempPath(tempFolderPath);
 		
-		RecorderParameters recorderParameters = Util.getRecorderParameter(currentResolution);
+		RecorderParameters recorderParameters = Util.getRecorderParameter(CURRENT_RESOLUTION);
 		sampleRate = recorderParameters.getAudioSamplingRate();
 		frameRate = recorderParameters.getVideoFrameRate();
 		frameTime = (1000000L / frameRate);
@@ -655,8 +655,8 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	 */
 	class AudioRecordRunnable implements Runnable {
 
-		private int bufferSize;
-		private short[] audioData;
+		private final int bufferSize;
+		private final short[] audioData;
 		private int bufferReadResult;
 		private final AudioRecord audioRecord;
 		public volatile boolean isInitialized;
@@ -723,7 +723,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 				}
 				this.isInitialized = true;
 				this.audioRecord.startRecording();
-				while (((runAudioThread) || (mVideoTimestamp > mAudioTimestamp)) && (mAudioTimestamp < (1000 * recordingTime)))
+				while (((runAudioThread) || (mVideoTimestamp > mAudioTimestamp)) && (mAudioTimestamp < (1000 * RECORDING_TIME)))
 				{
 					updateTimestamp();
 					bufferReadResult = this.audioRecord.read(audioData, 0, audioData.length);
@@ -743,7 +743,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	 */
 	class CameraView extends SurfaceView implements SurfaceHolder.Callback, PreviewCallback {
 
-		private SurfaceHolder mHolder;
+		private final SurfaceHolder mHolder;
 
 
 		public CameraView(Context context, Camera camera) {
@@ -959,16 +959,16 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 					}
 					//超过最低时间时，下一步按钮可点击
 					totalTime = System.currentTimeMillis() - firstTime - pausedTime - ((long) (1.0 / (double) frameRate) * 1000);
-					if (!nextEnabled && totalTime >= recordingChangeTime) {
+					if (!nextEnabled && totalTime >= RECORDING_CHANGE_TIME) {
 						nextEnabled = true;
 						nextBtn.setEnabled(true);
 					}
 
-					if (nextEnabled && totalTime >= recordingMinimumTime) {
+					if (nextEnabled && totalTime >= RECORDING_MINIMUM_TIME) {
 						mHandler.sendEmptyMessage(5);
 					}
 
-					if (currentRecorderState == RecorderState.PRESS && totalTime >= recordingChangeTime) {
+					if (currentRecorderState == RecorderState.PRESS && totalTime >= RECORDING_CHANGE_TIME) {
 						currentRecorderState = RecorderState.LOOSEN;
 						mHandler.sendEmptyMessage(2);
 					}
@@ -994,7 +994,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	public boolean onTouch(View v, MotionEvent event) {
 
 		if(!recordFinish){
-			if(totalTime< recordingTime){
+			if(totalTime< RECORDING_TIME){
 				switch (event.getAction()) {
 				case MotionEvent.ACTION_DOWN:
 					//如果MediaRecorder没有被初始化

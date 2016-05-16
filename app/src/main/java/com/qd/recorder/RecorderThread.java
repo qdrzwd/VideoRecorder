@@ -11,17 +11,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RecorderThread extends Thread{
 
+    private static final AtomicBoolean M_IS_STOP = new AtomicBoolean(false);
+    private static final AtomicBoolean M_IS_FINISH = new AtomicBoolean(false);
+
     private opencv_core.IplImage mYuvIplImage;
     private NewFFmpegFrameRecorder mVideoRecorder;
     private ByteBuffer mByteBuffer;
     private FFmpegRecorderActivity.AsyncStopRecording mAsyncTask;
 
-    private AtomicBoolean mIsStop = new AtomicBoolean(false);
-    private AtomicBoolean mIsFinish = new AtomicBoolean(false);
-
     private byte[] mBytes;
-    private int mSize;
-    private long[] mTime;
+    private final int mSize;
+    private final long[] mTime;
     private int mIndex;
     private int mTotalFrame = 180;
 
@@ -51,7 +51,7 @@ public class RecorderThread extends Thread{
             int timeIndex = 0;
             int pos = 0;
             int byteIndex;
-            while (!mIsFinish.get()) {
+            while (!M_IS_FINISH.get()) {
                 if (mByteBuffer.position() > pos) {
                     for(byteIndex = 0;byteIndex < mSize;byteIndex++){
                         mBytes[byteIndex] = mByteBuffer.get(pos + byteIndex);
@@ -74,7 +74,7 @@ public class RecorderThread extends Thread{
                     }
 
                 } else {
-                    if(mIsStop.get()){
+                    if(M_IS_STOP.get()){
                         break;
                     }
                     try {
@@ -91,7 +91,7 @@ public class RecorderThread extends Thread{
 
     public void stopRecord(AsyncTask asyncTask){
         mAsyncTask = (FFmpegRecorderActivity.AsyncStopRecording)asyncTask;
-        mIsStop.set(true);
+        M_IS_STOP.set(true);
         try {
             this.join();
         } catch (Exception e) {
@@ -100,7 +100,7 @@ public class RecorderThread extends Thread{
     }
 
     public void finish(){
-        mIsFinish.set(true);
+        M_IS_FINISH.set(true);
         try {
             this.join();
         } catch (Exception e) {

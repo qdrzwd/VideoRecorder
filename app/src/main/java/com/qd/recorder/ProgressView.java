@@ -14,13 +14,14 @@ import android.view.View;
 
 public class ProgressView extends View
 {
+	private static final float FIRST_WIDTH = 4f;//断点的宽度
+	private static final float THREE_WIDTH = 1f;//断点的宽度
+	private static final LinkedList<Integer> LINKED_LIST = new LinkedList<Integer>();
+
 	private Paint progressPaint;//三个颜色的画笔
 	private Paint firstPaint;//三个颜色的画笔
 	private Paint threePaint;//三个颜色的画笔
 	private Paint breakPaint;//三个颜色的画笔
-	private float firstWidth = 4f;//断点的宽度
-	private float threeWidth = 1f;//断点的宽度
-	private LinkedList<Integer> linkedList = new LinkedList<Integer>();
 	private float perPixel;
 	private float countRecorderTime = 6000;//总的录制时间
 
@@ -120,9 +121,9 @@ public class ProgressView extends View
 		//Log.i("recorder", curTime  - initTime + "");
 		countWidth = 0;
 		//每次绘制都将队列中的断点的时间顺序，绘制出来
-		if(!linkedList.isEmpty()){
+		if(!LINKED_LIST.isEmpty()){
 			float frontTime = 0;
-			Iterator<Integer> iterator = linkedList.iterator();
+			Iterator<Integer> iterator = LINKED_LIST.iterator();
 			while(iterator.hasNext()){
 				int time = iterator.next();
 				//求出本次绘制矩形的起点位置
@@ -132,16 +133,16 @@ public class ProgressView extends View
 				//绘制进度条
 				canvas.drawRect(left, 0,countWidth,getMeasuredHeight(),progressPaint);
 				//绘制断点
-				canvas.drawRect(countWidth, 0,countWidth + threeWidth,getMeasuredHeight(),breakPaint);
-				countWidth += threeWidth;
+				canvas.drawRect(countWidth, 0,countWidth + THREE_WIDTH,getMeasuredHeight(),breakPaint);
+				countWidth += THREE_WIDTH;
 
 				frontTime = time;
 			}
 			//绘制三秒处的断点
-			if(linkedList.getLast() <= 3000)
-				canvas.drawRect(perPixel*3000, 0,perPixel*3000+threeWidth,getMeasuredHeight(),threePaint);
+			if(LINKED_LIST.getLast() <= 3000)
+				canvas.drawRect(perPixel*3000, 0,perPixel*3000+ THREE_WIDTH,getMeasuredHeight(),threePaint);
 		}else//绘制三秒处的断点
-			canvas.drawRect(perPixel*3000, 0,perPixel*3000+threeWidth,getMeasuredHeight(),threePaint);//绘制三秒处的矩形
+			canvas.drawRect(perPixel*3000, 0,perPixel*3000+ THREE_WIDTH,getMeasuredHeight(),threePaint);//绘制三秒处的矩形
 
 		//当手指按住屏幕时，进度条会增长
 		if(currentState == State.START){
@@ -158,9 +159,9 @@ public class ProgressView extends View
 		}
 		if(isVisible){
 			if(currentState == State.START)
-				canvas.drawRect(countWidth + perProgress, 0,countWidth + firstWidth + perProgress,getMeasuredHeight(),firstPaint);
+				canvas.drawRect(countWidth + perProgress, 0,countWidth + FIRST_WIDTH + perProgress,getMeasuredHeight(),firstPaint);
 			else
-				canvas.drawRect(countWidth, 0,countWidth + firstWidth,getMeasuredHeight(),firstPaint);
+				canvas.drawRect(countWidth, 0,countWidth + FIRST_WIDTH,getMeasuredHeight(),firstPaint);
 		}
 		//结束绘制一闪一闪的黄色区域
 		initTime = System.currentTimeMillis();
@@ -182,6 +183,6 @@ public class ProgressView extends View
 	 * @param time:ms为单位
 	 */
 	public void putProgressList(int time) {
-		linkedList.add(time);
+		LINKED_LIST.add(time);
 	}
 }

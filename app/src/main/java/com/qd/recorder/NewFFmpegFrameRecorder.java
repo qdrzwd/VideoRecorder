@@ -238,8 +238,8 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
             }
 
             /* free the streams */
-            int nb_streams = oc.nb_streams();
-            for(int i = 0; i < nb_streams; i++) {
+            int nbStreams = oc.nb_streams();
+            for(int i = 0; i < nbStreams; i++) {
                 av_free(oc.streams(i).codec());
                 av_free(oc.streams(i));
             }
@@ -301,17 +301,17 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
         gotAudioPacket = new int[1];
 
         /* auto detect the output format from the name. */
-        String format_name = format == null || format.length() == 0 ? null : format;
-        if ((oformat = av_guess_format(format_name, filename, null)) == null) {
+        String formatName = format == null || format.length() == 0 ? null : format;
+        if ((oformat = av_guess_format(formatName, filename, null)) == null) {
             int proto = filename.indexOf("://");
             if (proto > 0) {
-                format_name = filename.substring(0, proto);
+                formatName = filename.substring(0, proto);
             }
-            if ((oformat = av_guess_format(format_name, filename, null)) == null) {
+            if ((oformat = av_guess_format(formatName, filename, null)) == null) {
                 throw new Exception("av_guess_format() error: Could not guess output format for \"" + filename + "\" and " + format + " format.");
             }
         }
-        format_name = oformat.name().getString();
+        formatName = oformat.name().getString();
 
         /* allocate the output media context */
         if ((oc = avformat_alloc_context()) == null) {
@@ -327,13 +327,13 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
         if (imageWidth > 0 && imageHeight > 0) {
             if (videoCodec != AV_CODEC_ID_NONE) {
                 oformat.video_codec(videoCodec);
-            } else if ("flv".equals(format_name)) {
+            } else if ("flv".equals(formatName)) {
                 oformat.video_codec(AV_CODEC_ID_FLV1);
-            } else if ("mp4".equals(format_name)) {
+            } else if ("mp4".equals(formatName)) {
                 oformat.video_codec(AV_CODEC_ID_MPEG4);
-            } else if ("3gp".equals(format_name)) {
+            } else if ("3gp".equals(formatName)) {
                 oformat.video_codec(AV_CODEC_ID_H263);
-            } else if ("avi".equals(format_name)) {
+            } else if ("avi".equals(formatName)) {
                 oformat.video_codec(AV_CODEC_ID_HUFFYUV);
             }
 
@@ -344,11 +344,11 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
                 throw new Exception("avcodec_find_encoder() error: Video codec not found.");
             }
 
-            AVRational frame_rate = av_d2q(frameRate, 1001000);
-            AVRational supported_framerates = videoCodecAVCodec.supported_framerates();
-            if (supported_framerates != null) {
-                int idx = av_find_nearest_q_idx(frame_rate, supported_framerates);
-                frame_rate = supported_framerates.position(idx);
+            AVRational frameRate = av_d2q(this.frameRate, 1001000);
+            AVRational supportedFramerates = videoCodecAVCodec.supported_framerates();
+            if (supportedFramerates != null) {
+                int idx = av_find_nearest_q_idx(frameRate, supportedFramerates);
+                frameRate = supportedFramerates.position(idx);
             }
 
             /* add a video output stream */
@@ -369,7 +369,7 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
                of which frame timestamps are represented. for fixed-fps content,
                timebase should be 1/framerate and timestamp increments should be
                identically 1. */
-            videoC.time_base(av_inv_q(frame_rate));
+            videoC.time_base(av_inv_q(frameRate));
             videoC.gop_size(12); /* emit one intra frame every twelve frames at most */
             if (videoQuality >= 0) {
                 videoC.flags(videoC.flags() | CODEC_FLAG_QSCALE);
@@ -428,9 +428,9 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
         if (audioChannels > 0 && audioBitrate > 0 && sampleRate > 0) {
             if (audioCodec != AV_CODEC_ID_NONE) {
                 oformat.audio_codec(audioCodec);
-            } else if ("flv".equals(format_name) || "mp4".equals(format_name) || "3gp".equals(format_name)) {
+            } else if ("flv".equals(formatName) || "mp4".equals(formatName) || "3gp".equals(formatName)) {
                 oformat.audio_codec(AV_CODEC_ID_AAC);
-            } else if ("avi".equals(format_name)) {
+            } else if ("avi".equals(formatName)) {
                 oformat.audio_codec(AV_CODEC_ID_PCM_S16LE);
             }
 
@@ -582,11 +582,11 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
             }
             //int bufferSize = audio_input_frame_size * audio_c.bits_per_raw_sample()/8 * audio_c.channels();
             int planes = av_sample_fmt_is_planar(audioC.sample_fmt()) != 0 ? (int) audioC.channels() : 1;
-            int data_size = av_samples_get_buffer_size((IntPointer)null, audioC.channels(),
+            int dataSize = av_samples_get_buffer_size((IntPointer)null, audioC.channels(),
                     audioInputFrameSize, audioC.sample_fmt(), 1) / planes;
             samplesOut = new BytePointer[planes];
             for (int i = 0; i < samplesOut.length; i++) {
-                samplesOut[i] = new BytePointer(av_malloc(data_size)).capacity(data_size);
+                samplesOut[i] = new BytePointer(av_malloc(dataSize)).capacity(dataSize);
             }
             samplesIn = new Pointer[AVFrame.AV_NUM_DATA_POINTERS];
             samplesInPtr = new PointerPointer(AVFrame.AV_NUM_DATA_POINTERS);
@@ -650,9 +650,9 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
      	
      	//变换图像，并用黑色填充其余值
      	//cvWarpAffine(img,img_rotate, cvMat,CV_INTER_LINEAR+CV_WARP_FILL_OUTLIERS,cvScalarAll(0) );
- 		IplImage img_rotate = IplImage.create(img.height(),img.width(),  IPL_DEPTH_8U, 2);
- 		cvTranspose(img, img_rotate);
- 		cvTranspose(img_rotate, img);
+ 		IplImage imgRotate = IplImage.create(img.height(),img.width(),  IPL_DEPTH_8U, 2);
+ 		cvTranspose(img, imgRotate);
+ 		cvTranspose(imgRotate, img);
  		//cvTranspose(img, img_rotate);
      	cvFlip(img,null,-1);
      	

@@ -24,8 +24,8 @@ public class RecorderParameters {
 	public static boolean isAAC_SUPPORTED() {
 		return AAC_SUPPORTED;
 	}
-	public static void setAAC_SUPPORTED(boolean aAC_SUPPORTED) {
-		AAC_SUPPORTED = aAC_SUPPORTED;
+	public static void setAAC_SUPPORTED(boolean aacSupported) {
+		AAC_SUPPORTED = aacSupported;
 	}
 	public String getVideoOutputFormat() {
 		return videoOutputFormat;

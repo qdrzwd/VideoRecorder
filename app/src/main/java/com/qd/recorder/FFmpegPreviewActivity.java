@@ -40,12 +40,12 @@ public class FFmpegPreviewActivity extends Activity implements TextureView.Surfa
 		getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
 		surfaceView = (TextureView) findViewById(R.id.preview_video);
 		
-		RelativeLayout preview_video_parent = (RelativeLayout)findViewById(R.id.preview_video_parent);
-		LayoutParams layoutParams = (LayoutParams) preview_video_parent
+		RelativeLayout previewVideoParent = (RelativeLayout)findViewById(R.id.preview_video_parent);
+		LayoutParams layoutParams = (LayoutParams) previewVideoParent
 				.getLayoutParams();
 		layoutParams.width = displaymetrics.widthPixels;
 		layoutParams.height = displaymetrics.widthPixels;
-		preview_video_parent.setLayoutParams(layoutParams);
+		previewVideoParent.setLayoutParams(layoutParams);
 		
 		surfaceView.setSurfaceTextureListener(this);
 		surfaceView.setOnClickListener(this);

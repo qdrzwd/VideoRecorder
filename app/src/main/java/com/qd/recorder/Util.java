@@ -161,8 +161,7 @@ public class Util {
 		File file = new File(dirPath);
 		if(!file.exists() || !file.isDirectory())
 			file.mkdirs();
-		String filePath = dirPath + "/" + filename;
-		return filePath;
+		return dirPath + "/" + filename;
 	}
 
 	public static String createFinalPath(Context context)
@@ -211,32 +210,26 @@ public class Util {
 		}
 		else
 			dirPath = tempFolderPath.getAbsolutePath();
-		String filePath = dirPath + "/" + fileName;
-		return filePath;
+		return dirPath + "/" + fileName;
 	}
 	public static String createTempPath(Context context,File tempFolderPath )
 	{
 		long dateTaken = System.currentTimeMillis();
-		String filePath = genrateFilePath(context,String.valueOf(dateTaken), false, tempFolderPath);
-		return filePath;
+		return genrateFilePath(context,String.valueOf(dateTaken), false, tempFolderPath);
 	}
 
 
 
 	public static File getTempFolderPath()
 	{
-		File tempFolder = new File(CONSTANTS.TEMP_FOLDER_PATH +"_" +System.currentTimeMillis());
-		return tempFolder;
+		return new File(CONSTANTS.TEMP_FOLDER_PATH +"_" +System.currentTimeMillis());
 	}
 
 
 	public static List<Camera.Size> getResolutionList(Camera camera)
 	{ 
 		Parameters parameters = camera.getParameters();
-		List<Camera.Size> previewSizes = parameters.getSupportedPreviewSizes();
-
-
-		return previewSizes;
+		return parameters.getSupportedPreviewSizes();
 	}
 
 	public static RecorderParameters getRecorderParameter(int currentResolution)
@@ -313,9 +306,9 @@ public class Util {
 
 	public static void concatenateMultipleFiles(String inpath, String outpath)
 	{
-		File Folder = new File(inpath);
+		File folder = new File(inpath);
 		File files[];
-		files = Folder.listFiles();
+		files = folder.listFiles();
 
 		if(files.length>0)
 		{
@@ -411,9 +404,9 @@ public class Util {
 				.findViewById(R.id.setting_account_bind_cancel);// 取消
 		TextView dialogTitle = (TextView) view
 				.findViewById(R.id.global_dialog_title);// 标题
-		View line_hori_center = view.findViewById(R.id.line_hori_center);// 中竖线
+		View lineHoriCenter = view.findViewById(R.id.line_hori_center);// 中竖线
 		confirmButton.setVisibility(View.GONE);// 默认隐藏取消按钮
-		line_hori_center.setVisibility(View.GONE);
+		lineHoriCenter.setVisibility(View.GONE);
 		TextView textView = (TextView) view.findViewById(R.id.setting_account_bind_text);
 
 		// 设置对话框的宽度
@@ -447,7 +440,7 @@ public class Util {
 		// 取消按钮事件
 		if(type == 2){
 			cancelButton.setVisibility(View.VISIBLE);
-			line_hori_center.setVisibility(View.VISIBLE);
+			lineHoriCenter.setVisibility(View.VISIBLE);
 			cancelButton.setOnClickListener(new OnClickListener(){
 				@Override
 				public void onClick(View v){
@@ -468,7 +461,6 @@ public class Util {
 	
 	public IplImage getFrame(String filePath){
 		CvCapture capture = cvCreateFileCapture(filePath);
-		IplImage image = cvQueryFrame(capture);
-		return image;
+		return cvQueryFrame(capture);
 	}
 }

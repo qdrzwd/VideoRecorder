@@ -842,8 +842,10 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 
 			for (i = imageWidth * imageHeight * 3 / 2 - 1; i >= imageWidth
 					* imageHeight; i -= 2) {
-				yuv[count++] = data[i - 1];
-				yuv[count++] = data[i];
+				yuv[count] = data[i - 1];
+				count++;
+				yuv[count] = data[i];
+				count++;
 			}
 			return yuv;
 		}
@@ -919,7 +921,8 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 			count = 0;
 			for(j=cropH;j<cropH+newImageH;j++){
 				for(i=0;i<imageW;i++){
-					yuv[count++] = data[j*imageW+i];
+					yuv[count] = data[j*imageW+i];
+					count++;
 				}
 			}
 
@@ -927,7 +930,8 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 			tmp = imageH+cropH/2;
 			for(j=tmp;j<tmp + newImageH/2;j++){
 				for(i=0;i<imageW;i++){
-					yuv[count++] = data[j*imageW+i];
+					yuv[count] = data[j*imageW+i];
+					count++;
 				}
 			}
 

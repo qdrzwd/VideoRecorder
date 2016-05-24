@@ -36,7 +36,8 @@ public class RecorderThread extends Thread{
 
     public void putByteData(SavedFrames lastSavedframe){
         if(mByteBuffer != null && mByteBuffer.hasRemaining()){
-            mTime[mIndex++] = lastSavedframe.getTimeStamp();
+            mTime[mIndex] = lastSavedframe.getTimeStamp();
+            mIndex++;
             mByteBuffer.put(lastSavedframe.getFrameBytesData());
         }
     }
@@ -58,7 +59,8 @@ public class RecorderThread extends Thread{
                     }
 
                     pos += mSize;
-                    mVideoRecorder.setTimestamp(mTime[timeIndex++]);
+                    mVideoRecorder.setTimestamp(mTime[timeIndex]);
+                    timeIndex++;
                     mYuvIplImage.getByteBuffer().put(mBytes);
 
                     try {

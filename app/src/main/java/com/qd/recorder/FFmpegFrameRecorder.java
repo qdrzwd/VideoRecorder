@@ -577,7 +577,6 @@ public class FFmpegFrameRecorder extends FrameRecorder {
             } else {
                 audioInputFrameSize = audioC.frame_size();
             }
-            //int bufferSize = audio_input_frame_size * audio_c.bits_per_raw_sample()/8 * audio_c.channels();
             int planes = av_sample_fmt_is_planar(audioC.sample_fmt()) != 0 ? (int) audioC.channels() : 1;
             int dataSize = av_samples_get_buffer_size((IntPointer)null, audioC.channels(),
                     audioInputFrameSize, audioC.sample_fmt(), 1) / planes;

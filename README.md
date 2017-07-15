@@ -19,7 +19,7 @@ android视频录制，模仿微视，支持按下录制、抬起暂停。进度�
 
 7.视频旋转、利用图片合成视频、使用本地视频剪辑、后期视频特效添加等等
 
-这里只是解决了1、2、3、4、5、6。7如果有人知道，希望能够添加到本项目中。
+本项目解决了1、2、3、4、5、6。
 
 
 ![image](img/Screenshot_2014-03-22-22-07-35.png)
@@ -27,3 +27,20 @@ android视频录制，模仿微视，支持按下录制、抬起暂停。进度�
 ![image](img/Screenshot_2014-03-22-22-07-58.png)
 ![image](img/Screenshot_2014-03-22-22-08-18.png)
 ![image](img/Screenshot_2014-03-22-22-08-08.png)
+
+License
+-------
+
+    Copyright 2014 qdrzwd, Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.å

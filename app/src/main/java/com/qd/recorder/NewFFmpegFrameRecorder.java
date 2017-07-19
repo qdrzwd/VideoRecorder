@@ -580,7 +580,6 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
             } else {
                 audioInputFrameSize = audioC.frame_size();
             }
-            //int bufferSize = audio_input_frame_size * audio_c.bits_per_raw_sample()/8 * audio_c.channels();
             int planes = av_sample_fmt_is_planar(audioC.sample_fmt()) != 0 ? (int) audioC.channels() : 1;
             int dataSize = av_samples_get_buffer_size((IntPointer)null, audioC.channels(),
                     audioInputFrameSize, audioC.sample_fmt(), 1) / planes;
@@ -637,23 +636,10 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
  // 逆时针旋转图像degree角度（原尺寸）
  	private IplImage rotateImage(IplImage img)
      {
-     	/*IplImage img_rotate = IplImage.create(img.width(), img.height(),  IPL_DEPTH_8U, 2);
-     	//旋转中心为图像中心
-     	CvPoint2D32f center = new CvPoint2D32f(); 
-     	center.x(img.width()/2.0f+0.5f);
-     	center.y(img.height()/2.0f+0.5f);
-     	//计算二维旋转的仿射变换矩阵
-     	CvMat cvMat = cvCreateMat(2, 3, CV_32F);
-     	
-     	cvZero (img_rotate);
-     	cv2DRotationMatrix( center, degree,1.0, cvMat);*/
-     	
-     	//变换图像，并用黑色填充其余值
-     	//cvWarpAffine(img,img_rotate, cvMat,CV_INTER_LINEAR+CV_WARP_FILL_OUTLIERS,cvScalarAll(0) );
+
  		IplImage imgRotate = IplImage.create(img.height(),img.width(),  IPL_DEPTH_8U, 2);
  		cvTranspose(img, imgRotate);
  		cvTranspose(imgRotate, img);
- 		//cvTranspose(img, img_rotate);
      	cvFlip(img,null,-1);
      	
      	return img;
@@ -698,8 +684,6 @@ public class NewFFmpegFrameRecorder extends FrameRecorder {
                frames if using B frames, so we get the last frames by
                passing the same picture again */
         } else {
-        	
-        	//image = rotate(image,90);
 
             int width = image.width();
             int step = image.widthStep();

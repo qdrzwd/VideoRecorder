@@ -225,7 +225,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 					rec = true;
 					//开始进度条增长
 					progressView.setCurrentState(State.START);
-					//setTotalVideoTime();
 				break;
 				case 4:
 					//设置进度条暂停状态
@@ -317,7 +316,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		//Log.i("video", this.getLocalClassName()+"—destory");
 		recording = false;
 		runAudioThread = false;
 
@@ -349,7 +347,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		cancelBtn.setOnClickListener(this);
 		nextBtn = (Button) findViewById(R.id.recorder_next);
 		nextBtn.setOnClickListener(this);
-		//txtTimer = (TextView)findViewById(R.id.txtTimer);
 		flashIcon = (Button)findViewById(R.id.recorder_flashlight);
 		switchCameraIcon = (Button)findViewById(R.id.recorder_frontcamera);
 		flashIcon.setOnClickListener(this);
@@ -381,7 +378,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 			@Override
 			protected void onPostExecute(Boolean result) {
 				if(!result || cameraDevice == null){
-					//FuncCore.showToast(FFmpegRecorderActivity.this, "无法连接到相机");
 					finish();
 					return;
 				}
@@ -400,8 +396,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 				//设置surface的宽高
 				RelativeLayout.LayoutParams layoutParam1 = new RelativeLayout.LayoutParams(screenWidth,(int) (screenWidth*(previewWidth/(previewHeight*1f))));
 				layoutParam1.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
-				//int margin = Util.calculateMargin(previewWidth, screenWidth);
-				//layoutParam1.setMargins(0,margin,0,margin);
 
 				RelativeLayout.LayoutParams layoutParam2 = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT);
 				layoutParam2.topMargin = screenWidth;
@@ -462,7 +456,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 
 
 	private void initVideoRecorder() {
-		strVideoPath = Util.createFinalPath(this);//Util.createTempPath(tempFolderPath);
+		strVideoPath = Util.createFinalPath(this);
 		
 		RecorderParameters recorderParameters = Util.getRecorderParameter(CURRENT_RESOLUTION);
 		sampleRate = recorderParameters.getAudioSamplingRate();
@@ -526,10 +520,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 			bar = (ProgressBar) creatingProgress.findViewById(R.id.recorder_progress_progressbar);
 			creatingProgress.show();
 
-
-			
-			//txtTimer.setVisibility(View.INVISIBLE);
-			//handler.removeCallbacks(mUpdateTimeTask);
 			super.onPreExecute();
 		}
 		
@@ -881,30 +871,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 					nPos += imageWidth;
 				}
 			}
-			//这一部分可以直接旋转270度，但是图像颜色不对
-	//	    // Rotate the Y luma
-	//	    int i = 0;
-	//	    for(int x = imageWidth-1;x >= 0;x--)
-	//	    {
-	//	        for(int y = 0;y < imageHeight;y++)
-	//	        {
-	//	            yuv[i] = data[y*imageWidth+x];
-	//	            i++;
-	//	        }
-	//
-	//	    }
-	//	    // Rotate the U and V color components
-	//		i = imageWidth*imageHeight;
-	//	    for(int x = imageWidth-1;x > 0;x=x-2)
-	//	    {
-	//	        for(int y = 0;y < imageHeight/2;y++)
-	//	        {
-	//	            yuv[i] = data[(imageWidth*imageHeight)+(y*imageWidth)+x];
-	//	            i++;
-	//	            yuv[i] = data[(imageWidth*imageHeight)+(y*imageWidth)+(x-1)];
-	//	            i++;
-	//	        }
-	//	    }
 			return rotateYUV420Degree180(yuv,imageWidth,imageHeight);
 		}
 
@@ -1039,7 +1005,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	private void handleSurfaceChanged()
 	{
 		if(mCamera == null){
-			//showToast(this, "无法连接到相机");
 			finish();
 			return;
 		}
@@ -1129,7 +1094,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 				initiateRecording(false);
 		}else if(v.getId() == R.id.recorder_flashlight){
 			if(!getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)){
-				//showToast(this, "不能开启闪光灯");
 				return;
 			}
 			//闪光灯
@@ -1251,15 +1215,6 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 	}
 
 	/**
-	 * 求出录制的总时间
-	
-	private synchronized void setTotalVideoTime(){
-		if(totalTime > 0)
-			txtTimer.setText(Util.getRecordingTimeFromMillis(totalTime));
-		
-	} */
-	
-	/**
 	 * 释放资源，停止录制视频和音频
 	 */
 	private void releaseResources(){
@@ -1278,8 +1233,7 @@ public class FFmpegRecorderActivity extends Activity implements OnClickListener,
 		yuvIplImage = null;
 		videoRecorder = null;
 		lastSavedframe = null;
-		
-		//progressView.putProgressList((int) totalTime);
+
 		//停止刷新进度
 		progressView.setCurrentState(State.PAUSE);
 	}

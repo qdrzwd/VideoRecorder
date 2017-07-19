@@ -118,7 +118,6 @@ public class ProgressView extends View
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
 		long curTime = System.currentTimeMillis();
-		//Log.i("recorder", curTime  - initTime + "");
 		countWidth = 0;
 		//每次绘制都将队列中的断点的时间顺序，绘制出来
 		if(!LINKED_LIST.isEmpty()){
